@@ -4,7 +4,7 @@
 <h3 align="left"></h3>
 <p align="left">
 </p>
-<p>Frontend Developer at Alph Code Solutions</p>
+<p style="margin-bottom: 0;">Frontend Developer at Alph Code Solutions</p>
 <p>Currnetly learning .Net Framework Core and advanced JavaScript</p>
 <h3 align="left">Languages and Tools:</h3>
 <p align="left"> 
