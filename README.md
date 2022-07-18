@@ -1,4 +1,4 @@
-<h1 align="center">Hi 👋, I'm Madzid Eminovic</h1>
+<h1 align="center">Hi 👋, I'm Madžid Eminović</h1>
 <h3 align="center"></h3>
 
 <h3 align="left"></h3>
