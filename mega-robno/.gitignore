@@ -1,0 +1,11 @@
+# baza i lokalne tajne se nikad ne šalju
+*.db
+*.db-shm
+*.db-wal
+appsettings.*.local.json
+secrets.json
+.env
+bin/
+obj/
+*.zip
+.DS_Store
