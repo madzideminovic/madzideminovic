@@ -2,13 +2,13 @@
 
 Robno-materijalno poslovanje za Mega Solution d.o.o. — veleprodaja (faza 1), maloprodaja s Tring FP1 (faza 2), prelazak sa starog programa (faza 3).
 
-## Trenutna verzija: 0.1.0-preview
+## Trenutna verzija: 0.2.0-preview
 
 Ovo je **samo izgled (preview)**: jedna HTML datoteka s izmišljenim podacima, bez baze i bez servera.
 Ništa se ne snima; kad osvježiš stranicu, sve se vraća na početne demo podatke.
 
 ### Kako otvoriti preview na Macu
-1. Raspakuj zip `mega-robno-0.1.0-preview.zip`.
+1. Raspakuj zip `mega-robno-0.2.0-preview.zip`.
 2. Otvori folder `preview` i dvaput klikni na `Mega-Robno-preview.html`.
 3. Otvara se u Safariju ili Chromeu. Internet nije potreban (bez interneta se koristi sistemski font).
 
@@ -26,7 +26,17 @@ U pravom programu (faza 1) to će biti jedna datoteka postavki.
 ### Sadržaj foldera
 - `preview/Mega-Robno-preview.html` — gotov preview za otvaranje
 - `preview/src/sadrzaj.html` — izvor (isti sadržaj, bez HTML okvira)
-- `preview/screenshots/` — slike ekrana (svijetla, tamna tema, telefon)
+- `preview/screenshots/0.1.0`, `0.2.0` — slike ekrana po verzijama (svijetla, tamna tema, telefon)
+
+## Šta je novo u 0.2.0-preview
+Funkcije po uzoru na Pantheon (samo funkcije; izgled ostaje naš):
+- **Narudžbe** kupaca (210) i dobavljačima (200): rezervacija robe, „naručeno“ uz artikle ispod minimuma, iz narudžbe jednim klikom račun/otpremnica ili kalkulacija.
+- **Servisni nalozi** (600): garancija, plaćeni servis, reklamacija robe, tok naloga.
+- **Serijski brojevi** za mašine: ulaz, prodaja, garancija 24 mj., servis; izbor SN na računu i ispis na dokumentu.
+- **Novac**: otvorene stavke po starosti duga i IOS, bankovni izvodi s povezivanjem uplata, blagajna.
+- **Šifarnici**: jedan šifarnik *Subjekti* (kupac i dobavljač zajedno), klasifikacija artikala u grupe, pravila cijena i popusta (s probom), vrste dokumenata s našim šiframa.
+- Dugme **Novi dokument**: upišeš šifru (npr. 300) i otvara se forma.
+- Na novom računu popust se računa sam po pravilima.
 
 ## Plan
 | Faza | Sadržaj | Status |

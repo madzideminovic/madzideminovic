@@ -162,6 +162,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .tbl tr.storno td .strike{text-decoration:line-through}
 .tbl td.diff-plus{color:var(--ok);font-weight:600} .tbl td.diff-minus{color:var(--bad);font-weight:600}
 .tbl .name{font-weight:500}
+.tbl td.mono{white-space:nowrap}
 .tbl .sub{font-size:12px;color:var(--muted)}
 .tbl input.inp{width:100%}
 .empty{padding:30px;text-align:center;color:var(--muted)}
@@ -218,6 +219,19 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .paper .stamp{color:#bb3128;border:2px solid #bb3128;display:inline-block;padding:2px 10px;font-weight:700;transform:rotate(-6deg);letter-spacing:.1em}
 .paper-wrap{overflow-x:auto} .paper-wrap .paper{min-width:600px}
 
+.tree{display:flex;flex-direction:column;padding:6px}
+.tree button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:600}
+.tree button.lvl1{padding-left:32px;font-weight:400;font-size:13px}
+.tree button:hover{background:var(--surface-2)} .tree button.sel{background:var(--accent-soft);color:var(--accent)}
+.tree .meta{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;font-weight:400;white-space:nowrap}
+.newdoc{position:relative}
+.newdoc .search-res{left:auto;right:0;width:min(400px,92vw)}
+.timeline{display:flex;flex-direction:column;border-left:2px solid var(--border);margin-left:6px;padding-left:16px}
+.timeline .ev{position:relative;padding:2px 0 12px}
+.timeline .ev::before{content:"";position:absolute;left:-23px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--surface)}
+.code{font-family:var(--mono);font-size:11.5px;font-weight:600;padding:1px 6px;border-radius:5px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);white-space:nowrap}
+.tabs .code{margin-right:4px}
+
 /* ---------- telefon ---------- */
 @media (max-width:1100px){ .g-2-1,.g-1-1{grid-template-columns:minmax(0,1fr)} }
 @media (max-width:900px){
@@ -231,6 +245,10 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
   .search{order:9;width:100%;margin-left:0}
   .tb-spacer{margin-left:auto}
   .user .uname{display:none}
+  .newdoc{position:static}
+  .newdoc .lbl{display:none}
+  #ndBtn{padding:0 10px}
+  .newdoc .search-res{top:100%;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));width:auto}
   .crumb{display:none}
 }
 @media (max-width:520px){
@@ -261,6 +279,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
       <button class="icon-btn burger" id="burger" aria-label="Otvori meni"></button>
       <div class="tb-title"><div class="crumb" id="crumb"></div><h1 id="title">Pregled</h1></div>
       <div class="tb-spacer"></div>
+      <div class="newdoc" id="ndBox"><button class="btn btn-primary" id="ndBtn" title="Novi dokument po vrsti"><span id="ndIco" style="display:flex"></span><span class="lbl">Novi dokument</span></button><div class="search-res" id="ndMenu" hidden></div></div>
       <div class="search" id="searchBox">
         <span id="searchIco"></span>
         <input id="search" type="search" placeholder="Traži artikl, partnera, dokument…" autocomplete="off" aria-label="Pretraga">
@@ -282,12 +301,12 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 const CONFIG = {
   appName: 'Mega Robno',
   appShort: 'MR',
-  version: '0.1.0-preview',
+  version: '0.2.0-preview',
   firma: { naziv:'Mega Solution d.o.o.', adresa:'Ulica primjera bb (demo)', grad:'71000 Sarajevo', jib:'4200000000001', pdvBroj:'200000000001', banka:'Demo banka d.d. · 1610000000000001' },
   pdvStopa: 17,
   valuta: 'KM',
   kursEUR: 1.95583,
-  danas: new Date(2026, 10, 9),
+  danas: new Date(2026, 10, 10),
   pocetak: new Date(2026, 4, 1),
   metodaZaliha: 'Ponderisani prosjek',
   rasporedTroskova: 'Po vrijednosti stavke',
@@ -349,6 +368,15 @@ const IC = {
   info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',
   undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
   trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  cart:'<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h12l2-8H6"/>',
+  wrench:'<path d="M15 4a5 5 0 0 0-4.6 6.9L3 18.3 5.7 21l7.4-7.4A5 5 0 0 0 20 9l-3 3-3-1-1-3 3-3z"/>',
+  scale:'<path d="M12 3v18M6 21h12M4 7h16M7 7l-3 7a3 3 0 0 0 6 0zM17 7l-3 7a3 3 0 0 0 6 0z"/>',
+  bank:'<path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18"/>',
+  wallet:'<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/>',
+  tree:'<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/>',
+  percent:'<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
+  list:'<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>',
+  barcode:'<path d="M4 5v14M7 5v14M11 5v14M14 5v14M17 5v14M20 5v14"/>',
   printer:'<path d="M6 9V3h12v6M6 18H4v-7h16v7h-2"/><rect x="6" y="14" width="12" height="7"/>'
 };
 const ico = (n, cls='') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]||''}</svg>`;
@@ -612,13 +640,189 @@ const INV = { broj:'INV-2026-02', datum:TODAY, status:'U toku', komisija:'Kenan,
 [[4,-1],[9,1],[27,-1.8],[33,-2],[45,1],[66,-1],[70,-5],[75,3],[28,0.6]].forEach(([i, d]) => { const r = INV.rows[i]; r.popisano = Math.max(0, r2(r.knjizno + d)); });
 
 /* =====================================================================
+   0.2.0 — klasifikacija, formule popusta, serijski brojevi, narudžbe,
+   servis, banka, blagajna, vrste dokumenata (demo podaci)
+   ===================================================================== */
+const KLAS = [
+ ['KC','Koch-Chemie',null],['KC-PR','Pranje i pjene','KC'],['KC-CI','Čišćenje','KC'],['KC-PO','Poliranje','KC'],['KC-ZA','Zaštita i njega','KC'],['KC-PB','Pribor','KC'],
+ ['IPC','IPC',null],['IPC-PE','Perači','IPC'],['IPC-US','Usisivači i ekstraktori','IPC'],['IPC-DP','Dijelovi i pribor','IPC'],
+ ['DB','DiBO',null],['DB-PE','Perači i pjenomati','DB'],['DB-DP','Pribor i dijelovi','DB'],
+ ['BM','Biemmedue',null],['BM-GR','Grijači','BM'],['BM-OD','Odvlaživači','BM'],['BM-DP','Dijelovi','BM'],
+ ['OP','Oprema i potrošni',null],['OP-KR','Krpe i ručnici','OP'],['OP-CE','Četke i aplikatori','OP'],['OP-AL','Alati i raspršivači','OP'],['OP-AM','Ambalaža','OP']
+].map(([id, naziv, parent]) => ({ id, naziv, parent }));
+const GRP_SIF = { 'KC-PR':'1001 1002 1003 1020 2001 2003', 'KC-CI':'1010 1011 1070 1071 1072 1080 1081 1082 1083 2002', 'KC-PO':'1040 1041 1042 1043 1044 1045 1090 3001 3002 3003', 'KC-ZA':'1030 1050 1051 1060 1061 1062', 'KC-PB':'3010 3011',
+  'IPC-PE':'101 102', 'IPC-US':'110 111 120', 'DB-PE':'201 202 210', 'BM-GR':'301 302 303 304 305', 'BM-OD':'306', 'OP-KR':'401 402 403', 'OP-CE':'410 411 412', 'OP-AL':'420 421 422 430', 'OP-AM':'440 441' };
+const DEF_GRP = { IPC:'IPC-DP', DB:'DB-DP', BM:'BM-DP', KC:'KC-PB', OP:'OP-AL' };
+ART.forEach(a => { const [pre, num] = a.sifra.split('-'); let g = null; for (const [gid, list] of Object.entries(GRP_SIF)) { if (gid.split('-')[0] === pre && list.split(' ').includes(num)) { g = gid; break; } } a.grupa = g || DEF_GRP[pre]; });
+const grp = id => KLAS.find(k => k.id === id);
+const grpPath = id => { const g = grp(id); if (!g) return ''; return (g.parent ? grp(g.parent).naziv + ' › ' : '') + g.naziv; };
+const inGroup = (a, gid) => !gid || a.grupa === gid || grp(a.grupa).parent === gid;
+
+// Kupci: rabatna grupa i prioritet isporuke
+KUP.forEach(k => { const n = k.naziv;
+  k.grupa = k.tip !== 'Firma' ? 'Fizička lica' : /Perionica|Wash|Pjena|Bistra|Duga|Kapljica/.test(n) ? 'Perionice' : /Detail|Polir|Sjaj|Kozmetika|Car Care/.test(n) ? 'Detailing studiji' : /Taxi|Rent|Flota|Autobus|Kamion/.test(n) ? 'Flote i prevoznici' : 'Auto saloni i servisi';
+  k.prioritet = k.id < 6 ? 'Visok' : 'Normalan'; });
+const GRUPE_KUP = ['Perionice','Detailing studiji','Flote i prevoznici','Auto saloni i servisi','Fizička lica'];
+
+// Formule cijena i popusta (prvo pravilo po prioritetu; podesivo)
+const FORMULE = [
+ { prio:10, naziv:'Akcija novembar – Biemmedue grijači', grupaArt:'BM-GR', popust:7, od:new Date(2026,10,1), do:new Date(2026,10,30) },
+ { prio:20, naziv:'Detailing studiji – poliranje', grupaKup:'Detailing studiji', grupaArt:'KC-PO', popust:12 },
+ { prio:25, naziv:'Auto Salon Premium – DiBO perači', kupId:4, grupaArt:'DB-PE', popust:6 },
+ { prio:30, naziv:'Perionice – pranje i pjene', grupaKup:'Perionice', grupaArt:'KC-PR', popust:10 },
+ { prio:40, naziv:'Flote i prevoznici – Koch-Chemie', grupaKup:'Flote i prevoznici', grupaArt:'KC', popust:8 },
+ { prio:50, naziv:'Količinski – rinfuza od 100 l/kg', rinfuza:true, minKol:100, popust:5 },
+ { prio:60, naziv:'Količinski – krpe i ručnici od 50 kom', grupaArt:'OP-KR', minKol:50, popust:15 },
+ { prio:70, naziv:'Ljetna akcija – IPC usisivači', grupaArt:'IPC-US', popust:5, od:new Date(2026,5,1), do:new Date(2026,7,31) }
+].map((f, i) => ({ id:i + 1, grupaKup:null, kupId:null, grupaArt:null, rinfuza:false, minKol:0, od:null, do:null, aktivna:true, ...f }));
+let FORM_MODE = 'prioritet';
+function matchRules(kup, a, kol, dat = TODAY){
+  return FORMULE.filter(f => f.aktivna && (!f.od || dat >= f.od) && (!f.do || dat <= f.do) && (!f.grupaKup || f.grupaKup === kup.grupa) && (f.kupId == null || f.kupId === kup.id) && inGroup(a, f.grupaArt) && (!f.rinfuza || a.jm !== 'kom') && kol >= (f.minKol || 0));
+}
+function rabatFor(kup, a, kol){
+  const m = matchRules(kup, a, kol);
+  if (m.length){ const f = FORM_MODE === 'najveci' ? m.reduce((x, y) => y.popust > x.popust ? y : x) : m.reduce((x, y) => y.prio < x.prio ? y : x); return { popust:f.popust, naziv:f.naziv, f, m }; }
+  if (kup.rabat) return { popust:kup.rabat, naziv:'Osnovni rabat kupca', f:null, m };
+  return { popust:0, naziv:'Bez popusta', f:null, m };
+}
+
+// Serijski brojevi za mašine
+const SER_SIF = ['IPC-101','IPC-102','IPC-110','IPC-111','IPC-120','DB-201','DB-202','DB-210','DB-220','BM-301','BM-302','BM-303','BM-304','BM-305','BM-306'];
+const addMonths = (d, n) => { const x = new Date(d); x.setMonth(x.getMonth() + n); return x; };
+const SERIJE = []; let snC = 0;
+ART.forEach(a => a.serijski = SER_SIF.includes(a.sifra));
+ART.filter(a => a.serijski).forEach(a => {
+  const src = [];
+  for (let i = 0; i < a.ps; i++) src.push({ dok:'PS', datum:START });
+  ULAZ.forEach(u => u.stavke.forEach(s => { if (s.artId === a.id) for (let i = 0; i < s.kol; i++) src.push({ dok:u.kal, datum:u.datum }); }));
+  const list = src.map(s => ({ sn:a.sifra.replace('-', '') + '-26' + String(1000 + (++snC) * 37 % 9000).padStart(4, '0'), artId:a.id, ulDok:s.dok, ulDatum:s.datum, status:'Na stanju', kupId:null, racun:null, prodato:null, garDo:null }));
+  IZLAZ.filter(d => !d.storno).forEach(d => d.stavke.forEach(s => { if (s.artId !== a.id) return;
+    for (let i = 0; i < s.kol; i++){ const x = list.find(q => q.status === 'Na stanju' && q.ulDatum <= d.datum) || list.find(q => q.status === 'Na stanju'); if (!x) return;
+      Object.assign(x, { status:'Prodat', kupId:d.kupId, racun:d.broj, prodato:d.datum, garDo:addMonths(d.datum, 24) }); s.sn = (s.sn || []).concat(x.sn); } }));
+  POVRAT.filter(p => p.artId === a.id).forEach(p => { const x = list.find(q => q.racun === p.ref); if (x) { x.status = 'Na stanju'; x.povrat = p.broj; } });
+  SERIJE.push(...list);
+});
+
+// Narudžbe kupaca (210) i dobavljačima (200)
+const NK = [], ND = [];
+for (let i = 0; i < 16; i++){
+  const kup = KUP[ri(0, KUP_FIRME.length - 1)]; const datum = randDate(D_SPAN - 52 + i * 3, D_SPAN - 50 + i * 3);
+  const used = new Set(); const stavke = [];
+  for (let l = 0; l < ri(2, 4); l++){ const a = pick(chance(.25) ? mid : cheap); if (used.has(a.id)) continue; used.add(a.id); stavke.push({ artId:a.id, kol:saleQty(a) + ri(2, 8), isp:0, cijena:a.vp }); }
+  const age = daysBetween(datum, TODAY);
+  const status = age > 20 ? (chance(.85) ? 'Isporučena' : 'Otkazana') : age > 7 ? pick(['Djelimično isporučena','Isporučena','Otvorena']) : 'Otvorena';
+  stavke.forEach((s, j) => { s.isp = status === 'Isporučena' ? s.kol : status === 'Djelimično isporučena' ? (j === 0 ? Math.max(1, Math.floor(s.kol / 2)) : 0) : 0; });
+  NK.push({ broj:'NK-2026-' + String(i + 1).padStart(3, '0'), datum, kupId:kup.id, rok:addDays(datum, ri(2, 9)), prioritet:kup.prioritet === 'Visok' || chance(.2) ? 'Hitno' : 'Normalno', stavke, status });
+}
+[[2, 70], [1, 62], [4, 50], [3, 41], [1, 33], [5, 25], [2, 14], [1, 4]].forEach(([dobId, ago], i, all) => {
+  const d = DOB[dobId]; const datum = addDays(TODAY, -ago);
+  let arts = ART.filter(a => a.dobId === dobId).sort(() => rnd() - .5).slice(0, ri(3, 5));
+  if (i === all.length - 1) arts = [0, 7, 19, 26, 13].map(id => ART[id]);
+  const status = ago > 30 ? 'Primljena' : ago > 12 ? pick(['Djelimično primljena','Primljena']) : ago > 6 ? 'Potvrđena' : 'Poslana';
+  const stavke = arts.map(a => { const kol = qtyFor(a); return { artId:a.id, kol, isp:status === 'Primljena' ? kol : status === 'Djelimično primljena' ? Math.ceil(kol / 2) : 0, cijena:a.nab }; });
+  ND.push({ broj:'ND-2026-' + String(i + 1).padStart(3, '0'), datum, dobId, ocekivano:addDays(datum, d.tip === 'EU' ? ri(12, 20) : ri(3, 7)), stavke, status });
+});
+const OPEN_ST = ['Otvorena','Djelimično isporučena','Poslana','Potvrđena','Djelimično primljena'];
+const isOpen = n => OPEN_ST.includes(n.status);
+const rezervisano = id => sum(NK.filter(isOpen), n => sum(n.stavke.filter(s => s.artId === id), s => s.kol - s.isp));
+const naruceno = id => sum(ND.filter(isOpen), n => sum(n.stavke.filter(s => s.artId === id), s => s.kol - s.isp));
+
+// Servisni nalozi (600)
+const SERVIS = [];
+const KVAR = { BM:['Ne pali grijač','Gasi se nakon 10 minuta','Ne radi ventilator','Gori lampica greške','Ne drži zadanu temperaturu'], IPC:['Ne diže pritisak','Curi voda na pumpi','Motor se pregrijava','Ne usisava, sumnja na motor','Buka u ležaju pumpe'], DB:['Ne diže pritisak','Curi voda na pumpi','Ne grije vodu','Buka u ležaju pumpe','Namotač se ne vraća'] };
+const prodSer = SERIJE.filter(x => x.status === 'Prodat').sort((a, b) => a.prodato - b.prodato);
+for (let i = 0; i < 14 && prodSer.length; i++){
+  const x = prodSer[(i * 5 + 2) % prodSer.length];
+  if (SERVIS.some(s => s.sn === x.sn)) continue;
+  const maxD = daysBetween(x.prodato, TODAY); if (maxD < 6) continue;
+  const datum = addDays(x.prodato, ri(5, maxD)); const age = daysBetween(datum, TODAY);
+  const status = age > 25 ? 'Vraćeno kupcu' : age > 12 ? pick(['Završeno','Vraćeno kupcu','Čeka dio']) : pick(['Primljeno','U radu','Čeka dio']);
+  const dio = status === 'Primljeno' ? null : pick(['IPC-131','IPC-130','BM-310','DB-222','DB-225',null]);
+  const gar = datum <= x.garDo;
+  SERVIS.push({ datum, kupId:x.kupId, artId:x.artId, sn:x.sn, vrsta:gar ? 'Garancija' : 'Plaćeni servis', kvar:pick(KVAR[ART[x.artId].sifra.split('-')[0]]), status, serviser:pick(['Kenan (interno)','Servis Pumpi d.o.o.']), dijelovi:dio ? [{ artId:ART.find(q => q.sifra === dio).id, kol:1 }] : [], rad:gar ? 0 : pick([45, 60, 90, 120]) });
+  if (['Primljeno','U radu','Čeka dio'].includes(status)) x.status = 'Na servisu';
+}
+SERVIS.push({ datum:addDays(TODAY, -3), kupId:3, artId:5, sn:null, vrsta:'Reklamacija robe', kvar:'Oštećena ambalaža pri isporuci (2 kom)', status:'U radu', serviser:'Amela', dijelovi:[], rad:0 });
+SERVIS.push({ datum:addDays(TODAY, -19), kupId:1, artId:10, sn:null, vrsta:'Reklamacija robe', kvar:'Kupac prijavio holograme nakon poliranja – zamjena za drugi lot', status:'Završeno', serviser:'Amela', dijelovi:[], rad:0 });
+SERVIS.sort((a, b) => a.datum - b.datum).forEach((s, i) => s.broj = 'SRV-2026-' + String(i + 1).padStart(3, '0'));
+const SRV_OPEN = ['Primljeno','U radu','Čeka dio'];
+
+// Banka i blagajna
+const BANKA = [], BLAG = [];
+const capT = d => d > TODAY ? new Date(TODAY) : d;
+IZLAZ.forEach(d => { if (d.storno || !d.placeno) return; const k = KUP[d.kupId];
+  if (d.nacin === 'Virman') BANKA.push({ datum:capT(addDays(d.datum, ri(1, Math.max(3, k.rok || 3)))), partner:k.naziv, u:d.placeno, i:0, opis:'Uplata po računu ' + d.broj, veza:d.broj, status:chance(.1) ? 'Povezano ručno' : 'Povezano automatski' });
+  else if (d.nacin === 'Kartica') BANKA.push({ datum:capT(addDays(d.datum, 2)), partner:'Kartično poslovanje (demo banka)', u:r2(d.placeno * .985), i:0, opis:'Kartični promet ' + d.broj + ' (umanjeno za proviziju)', veza:d.broj, status:'Povezano automatski' }); });
+ULAZ.forEach(u => { if (!u.placeno) return; const d = DOB[u.dobId]; BANKA.push({ datum:capT(addDays(u.datum, ri(5, d.rok))), partner:d.naziv, u:0, i:u.placeno, opis:(d.tip === 'EU' ? 'Devizno plaćanje ' : 'Plaćanje fakture ') + u.brojDob, veza:u.kal, status:'Povezano automatski' }); });
+USLUGE.forEach(u => { if (!u.placeno) return; BANKA.push({ datum:capT(addDays(u.datum, ri(3, DOB[u.dobId].rok))), partner:DOB[u.dobId].naziv, u:0, i:u.ukupno, opis:'Plaćanje ' + u.broj, veza:u.broj, status:'Povezano automatski' }); });
+JCI.forEach(j => BANKA.push({ datum:j.datum, partner:'UIO – uplata po JCI', u:0, i:j.pdv, opis:'PDV pri uvozu – ' + j.broj, veza:j.broj, status:'Povezano automatski' }));
+for (let m = 4; m <= 9; m++) BANKA.push({ datum:new Date(2026, m, 28), partner:'Demo banka d.d.', u:0, i:15, opis:'Naknada za vođenje računa', veza:'', status:'Trošak banke' });
+BANKA.push({ datum:addDays(TODAY, -1), partner:'Perionica Duga d.o.o.', u:250, i:0, opis:'Uplata – bez poziva na broj', veza:'', status:'Nije povezano' });
+BANKA.push({ datum:addDays(TODAY, -4), partner:'Emir Hodžić', u:120, i:0, opis:'Avans za narudžbu', veza:'', status:'Nije povezano' });
+(function(){ let s = 350, ub = 0, ib = 0;
+  const cash = IZLAZ.filter(d => d.nacin === 'Gotovina' && !d.storno);
+  for (let dd = 0; dd <= D_SPAN; dd++){ const day = addDays(START, dd); if (day.getDay() === 0) continue;
+    cash.filter(d => +d.datum === +day).forEach(d => { s = r2(s + d.ukupno); BLAG.push({ datum:day, broj:'UP-' + String(++ub).padStart(3, '0'), vrsta:'Uplatnica', opis:'Gotovinski račun ' + d.broj + ' – ' + KUP[d.kupId].naziv, u:d.ukupno, i:0, saldo:s }); });
+    if (chance(.12)){ const [op, iz] = pick([['Gorivo za dostavu', ri(50, 90)], ['Poštarina', 12.5], ['Kancelarijski materijal', ri(15, 40)], ['Sitni troškovi skladišta', ri(10, 30)]]); if (s > iz){ s = r2(s - iz); BLAG.push({ datum:day, broj:'IS-' + String(++ib).padStart(3, '0'), vrsta:'Isplatnica', opis:op, u:0, i:iz, saldo:s }); } }
+    if (day.getDay() === 5 && s > 400){ const pol = Math.floor((s - 200) / 10) * 10; s = r2(s - pol); const br = 'IS-' + String(++ib).padStart(3, '0'); BLAG.push({ datum:day, broj:br, vrsta:'Isplatnica', opis:'Polog gotovine na banku', u:0, i:pol, saldo:s }); BANKA.push({ datum:day, partner:CONFIG.firma.naziv, u:pol, i:0, opis:'Polog gotovine iz blagajne', veza:br, status:'Povezano automatski' }); }
+  } })();
+BANKA.sort((a, b) => a.datum - b.datum);
+const IZVODI = []; (function(){ let s = 48500; BANKA.forEach(t => { let iz = IZVODI[IZVODI.length - 1]; if (!iz || +iz.datum !== +t.datum){ iz = { broj:IZVODI.length + 1, datum:t.datum, stavke:[], poc:s }; IZVODI.push(iz); } iz.stavke.push(t); s = r2(s + t.u - t.i); iz.kraj = s; }); })();
+
+// Otvorene stavke
+const otvKupci = () => IZLAZ.filter(d => !d.storno && d.ukupno - d.placeno > .005).map(d => ({ key:'K' + d.kupId, subj:KUP[d.kupId].naziv, broj:d.broj, datum:d.datum, rok:d.rokDat, iznos:d.ukupno, placeno:d.placeno, ostalo:r2(d.ukupno - d.placeno) }));
+const otvDob = () => [...ULAZ.map(u => ({ key:'D' + u.dobId, subj:DOB[u.dobId].naziv, broj:u.brojDob, datum:u.datum, rok:u.rokDat, iznos:u.ukupno, placeno:u.placeno, ostalo:r2(u.ukupno - u.placeno) })),
+  ...USLUGE.map(u => ({ key:'D' + u.dobId, subj:DOB[u.dobId].naziv, broj:u.broj, datum:u.datum, rok:u.rokDat, iznos:u.ukupno, placeno:u.placeno ? u.ukupno : 0, ostalo:u.placeno ? 0 : u.ukupno }))].filter(x => x.ostalo > .005);
+const bucket = x => { const k = daysBetween(x.rok, TODAY); return k <= 0 ? 0 : k <= 30 ? 1 : k <= 60 ? 2 : 3; };
+
+// Jedan šifarnik subjekata
+const SUBJ = [
+  ...DOBS.map(d => ({ key:'D' + d.id, naziv:d.naziv, mjesto:d.grad + (d.tip === 'EU' ? ', ' + d.drzava : ''), idBroj:d.idBroj, tipovi:[d.vrsta === 'Roba' ? 'Dobavljač' : d.vrsta.includes('prevoz') ? 'Prevoznik' : d.vrsta.includes('špedicija') ? 'Špediter' : 'Dobavljač usluga'], grupa:d.tip === 'EU' ? 'Ino dobavljači' : 'Domaći dobavljači', prioritet:'—', rok:d.rok, valuta:d.valuta, dobId:d.id })),
+  ...KUP.map(k => ({ key:'K' + k.id, naziv:k.naziv, mjesto:k.grad, idBroj:k.jib || '—', tipovi:[k.tip === 'Firma' ? 'Kupac' : 'Kupac – fizičko lice'], grupa:k.grupa, prioritet:k.prioritet, rok:k.rok, valuta:'KM', kupId:k.id }))
+];
+SUBJ.find(s => s.key === 'D13').tipovi.push('Kupac');
+SUBJ.find(s => s.key === 'D15').tipovi.push('Servis');
+SUBJ.forEach((s, i) => s.sifra = 'S-' + String(i + 1).padStart(4, '0'));
+
+// Vrste dokumenata (nacrt naših šifri — uskladiti sa spiskom dokumenata)
+const VD = [
+ ['100','Ulaz od domaćeg dobavljača','Ulaz','+','KUF','KAL-','Ulazna faktura, narudžba 200','preview'],
+ ['110','Ino ulaz (uvoz)','Ulaz','+','KUF + JCI','KAL-','Ino faktura, JCI, narudžba 200','preview'],
+ ['120','Prijem bez fakture (čeka fakturu)','Ulaz','+','—','PR-','Otpremnica dobavljača','nacrt'],
+ ['150','Povrat od kupca','Ulaz','+','KIF (−)','PV-','Račun 300','preview'],
+ ['190','Višak po inventuri','Ulaz','+','—','VI-','Inventura','preview'],
+ ['200','Narudžba dobavljaču','Narudžba','naručeno','—','ND-','—','preview'],
+ ['210','Narudžba kupca','Narudžba','rezervacija','—','NK-','Predračun 320','preview'],
+ ['300','Račun – veleprodaja','Izlaz','−','KIF','RN-','Narudžba 210, predračun 320','preview'],
+ ['310','Otpremnica','Izlaz','−','—','OT-','Narudžba 210, račun 300','preview'],
+ ['320','Predračun / ponuda','Ostalo','—','—','PR-','—','preview'],
+ ['330','Avansni račun','Ostalo','—','KIF','AV-','Uplata kupca','nacrt'],
+ ['350','Povrat dobavljaču','Izlaz','−','KUF (−)','PD-','Kalkulacija 100/110','nacrt'],
+ ['360','Interni izlaz (uzorci, demo, vlastita potrošnja)','Interno','−','potvrditi','IZ-','—','nacrt'],
+ ['365','Utrošak dijelova u servisu','Interno','−','—','IZ-','Servisni nalog 600','nacrt'],
+ ['370','Otpis robe (oštećeno, isteklo)','Interno','−','potvrditi','OS-','Zapisnik','nacrt'],
+ ['390','Manjak po inventuri','Interno','−','potvrditi','MA-','Inventura','preview'],
+ ['400','Storno dokumenta','Ostalo','suprotno','KIF/KUF (−)','ST-','Bilo koji proknjiženi dokument','preview'],
+ ['500','Knjižno odobrenje','Ostalo','—','KIF (−)','KO-','Račun 300','nacrt'],
+ ['510','Knjižno zaduženje','Ostalo','—','KIF (+)','KZ-','Račun 300','nacrt'],
+ ['600','Servisni nalog','Servis','—','—','SRV-','Serijski broj, račun 300','preview'],
+ ['700','Bankovni izvod','Novac','—','—','IZV-','Uvoz izvoda banke','preview'],
+ ['710','Blagajna – uplatnica / isplatnica','Novac','—','—','UP- / IS-','Gotovinski račun 300','preview'],
+ ['800','Međuskladišnica VP → MP','Interno','prenos','—','MS-','Faza 2','faza 2'],
+ ['900','Početno stanje','Ulaz','+','—','PS-','Uvoz iz starog programa (faza 3)','faza 3']
+].map(([sifra, naziv, grupa, zaliha, knjiga, num, izvor, status]) => ({ sifra, naziv, grupa, zaliha, knjiga, num, izvor, status }));
+
+/* =====================================================================
    NAVIGACIJA I EKRANI
    ===================================================================== */
 const NAV = [
   { sec:null, items:[['pregled','Pregled','home']] },
-  { sec:'Roba', items:[['artikli','Artikli i zalihe','box'],['ulaz','Ulaz robe i kalkulacije','in'],['izlaz','Izlazni dokumenti','out'],['inventura','Inventura','clip']] },
-  { sec:'Partneri', items:[['dobavljaci','Dobavljači','truck'],['kupci','Kupci','users']] },
+  { sec:'Narudžbe', items:[['nkupci','Narudžbe kupaca','cart'],['ndob','Narudžbe dobavljačima','truck']] },
+  { sec:'Roba', items:[['artikli','Artikli i zalihe','box'],['ulaz','Ulaz robe i kalkulacije','in'],['izlaz','Izlazni dokumenti','out'],['inventura','Inventura','clip'],['serijski','Serijski brojevi','barcode']] },
+  { sec:'Servis', items:[['servis','Servisni nalozi','wrench']] },
+  { sec:'Novac', items:[['otvorene','Otvorene stavke i IOS','scale'],['izvodi','Banka i izvodi','bank'],['blagajna','Blagajna','wallet']] },
   { sec:'Knjigovodstvo', items:[['kifkuf','KIF i KUF','book']] },
+  { sec:'Šifarnici', items:[['subjekti','Subjekti','users'],['klasifikacija','Klasifikacija artikala','tree'],['formule','Cijene i popusti','percent'],['vrste','Vrste dokumenata','list']] },
   { sec:'Maloprodaja · faza 2', items:[['kasa','Kasa (Tring FP1)','cash',1],['dnevni','Dnevni izvještaj','chart',1],['nivelacije','Nivelacije','tag',1],['mpkalk','MP kalkulacije','calc',1]] },
   { sec:'Prelazak · faza 3', items:[['uvoz','Uvoz iz starog programa','upload',1],['poredjenje','Poređenje KIF/KUF','compare',1]] },
   { sec:'Sistem', items:[['trag','Trag promjena','history'],['postavke','Postavke','gear']] }
@@ -627,10 +831,10 @@ const ROUTES = {};
 let STATE = { izlazTab:'racuni', kifTab:'KIF', kifMj:'2026-10', artFilter:'', artGrupa:'', artMin:false, invSamoRazlike:false, topPer:'30', ulazQ:'', izlazQ:'', izlazStatus:'' };
 
 function renderNav(){
-  const cur = (location.hash.slice(1) || 'pregled').split('-')[0];
-  const below = ispodMin().length;
+  const cur0 = (location.hash.slice(1) || 'pregled').split('-')[0]; const cur = { dobavljaci:'subjekti', kupci:'subjekti' }[cur0] || cur0;
+  const below = ispodMin().length, nep = BANKA.filter(t => t.status === 'Nije povezano').length;
   $('#nav').innerHTML = NAV.map(g => (g.sec ? `<div class="nav-sec">${g.sec}</div>` : '') + g.items.map(([id, t, ic, soon]) =>
-    `<a href="#${id}" class="${cur === id ? 'active' : ''}">${ico(ic)}<span>${t}</span>${soon ? '<span class="soon">uskoro</span>' : ''}${id === 'artikli' && below ? `<span class="cnt" title="Ispod minimuma">${below}</span>` : ''}</a>`).join('')).join('');
+    `<a href="#${id}" class="${cur === id ? 'active' : ''}">${ico(ic)}<span>${t}</span>${soon ? '<span class="soon">uskoro</span>' : ''}${id === 'artikli' && below ? `<span class="cnt" title="Ispod minimuma">${below}</span>` : ''}${id === 'izvodi' && nep ? `<span class="cnt" title="Nepovezane stavke">${nep}</span>` : ''}</a>`).join('')).join('');
 }
 function setTitle(t, crumb){ $('#title').textContent = t; $('#crumb').textContent = crumb || CONFIG.appName; document.title = t + ' · ' + CONFIG.appName; }
 function route(){
@@ -640,6 +844,7 @@ function route(){
   renderNav();
   fn(h);
   closeDrawer();
+  if (STATE.afterRoute){ const f = STATE.afterRoute; STATE.afterRoute = null; f(); }
   window.scrollTo(0, 0);
 }
 
@@ -672,7 +877,7 @@ ROUTES.pregled = () => {
       <div class="card-b"><div class="chart" id="chart"></div>
       <details style="margin-top:8px"><summary class="muted" style="cursor:pointer;font-size:12.5px">Prikaži kao tabelu</summary><div class="table-wrap" id="chartTbl"></div></details></div></div>
     <div class="card"><div class="card-h"><h2>Ispod minimuma</h2><div class="right"><a class="btn btn-sm" href="#artikli-min">Sve</a></div></div>
-      <div class="list">${below.slice(0, 7).map(a => `<div class="list-row click" data-art="${a.id}" style="cursor:pointer"><div class="grow"><div class="name">${esc(a.naziv)}</div><div class="sub mono muted">${a.sifra}</div></div><div class="num"><b style="color:var(--bad)">${fq(a.stanje, a.jm)}</b> <span class="muted">/ ${fq(a.min, a.jm)} ${a.jm}</span></div></div>`).join('')}</div></div>
+      <div class="list">${below.slice(0, 7).map(a => `<div class="list-row click" data-art="${a.id}" style="cursor:pointer"><div class="grow"><div class="name">${esc(a.naziv)}</div><div class="sub mono muted">${a.sifra}</div></div><div class="num"><b style="color:var(--bad)">${fq(a.stanje, a.jm)}</b> <span class="muted">/ ${fq(a.min, a.jm)} ${a.jm}</span>${naruceno(a.id) ? '<div class="sub" style="color:var(--info)">naručeno ' + fq(naruceno(a.id), a.jm) + '</div>' : ''}</div></div>`).join('')}</div></div>
   </div>
   <div class="grid g-1-1">
     <div class="card"><div class="card-h"><h2>Najprodavaniji artikli</h2><div class="right"><div class="seg" id="topSeg"><button data-p="30" class="${STATE.topPer === '30' ? 'active' : ''}">30 dana</button><button data-p="180" class="${STATE.topPer === '180' ? 'active' : ''}">6 mjeseci</button></div></div></div>
@@ -733,25 +938,25 @@ ROUTES.artikli = h => {
   const brendovi = [...new Set(ART.map(a => a.brend))];
   $('#view').innerHTML = `
   <div class="kpis">
-    <div class="kpi"><div class="lbl">Artikala u šifarniku</div><div class="val">${ART.length}</div><div class="sub">${brendovi.length} grupe/brenda</div></div>
+    <div class="kpi"><div class="lbl">Artikala u šifarniku</div><div class="val">${ART.length}</div><div class="sub">${KLAS.filter(g => !g.parent).length} glavnih grupa · ${KLAS.filter(g => g.parent).length} podgrupa</div></div>
     <div class="kpi"><div class="lbl">Vrijednost zaliha (nabavna)</div><div class="val">${fmt(vrZaliha())} <small>KM</small></div><div class="sub">metoda: ${CONFIG.metodaZaliha.toLowerCase()}</div></div>
     <div class="kpi alert"><div class="lbl">Ispod minimuma</div><div class="val">${ispodMin().length}</div><div class="sub">${ART.filter(a => a.stanje <= 0).length} bez zalihe</div></div>
   </div>
   <div class="card">
     <div class="card-h"><div class="toolbar" style="width:100%">
       <input class="inp grow" id="artQ" placeholder="Šifra ili naziv…" value="${esc(STATE.artFilter)}" style="min-width:180px">
-      <select class="inp" id="artG"><option value="">Svi brendovi</option>${brendovi.map(b => `<option ${STATE.artGrupa === b ? 'selected' : ''}>${b}</option>`).join('')}</select>
+      <select class="inp" id="artG"><option value="">Sve grupe</option>${KLAS.map(g => `<option value="${g.id}" ${STATE.artGrupa === g.id ? 'selected' : ''}>${g.parent ? '\u00a0\u00a0\u00a0' : ''}${g.naziv}</option>`).join('')}</select>
       <label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="artMin" ${STATE.artMin ? 'checked' : ''}> Samo ispod minimuma</label>
       <button class="btn btn-primary" id="artNew">${ico('plus')}Novi artikl</button>
     </div></div>
-    <div class="table-wrap"><table class="tbl"><thead><tr><th>Šifra</th><th>Naziv</th><th class="hide-sm">Brend</th><th>JM</th><th class="num">Stanje</th><th class="num">Min.</th><th class="num">Nabavna</th><th class="num">VP cijena</th><th class="num">MPC</th><th class="num">Vrijednost</th><th>Status</th></tr></thead><tbody id="artBody"></tbody><tfoot id="artFoot"></tfoot></table></div>
+    <div class="table-wrap"><table class="tbl"><thead><tr><th>Šifra</th><th>Naziv</th><th class="hide-sm">Grupa</th><th>JM</th><th class="num">Stanje</th><th class="num">Min.</th><th class="num">Rezerv.</th><th class="num">Naruč.</th><th class="num">Nabavna</th><th class="num">VP cijena</th><th class="num">MPC</th><th class="num">Vrijednost</th><th>Status</th></tr></thead><tbody id="artBody"></tbody><tfoot id="artFoot"></tfoot></table></div>
   </div>`;
   const draw = () => {
     const q = STATE.artFilter.toLowerCase();
-    const rows = ART.filter(a => (!q || a.naziv.toLowerCase().includes(q) || a.sifra.toLowerCase().includes(q)) && (!STATE.artGrupa || a.brend === STATE.artGrupa) && (!STATE.artMin || a.stanje < a.min));
+    const rows = ART.filter(a => (!q || a.naziv.toLowerCase().includes(q) || a.sifra.toLowerCase().includes(q)) && inGroup(a, STATE.artGrupa) && (!STATE.artMin || a.stanje < a.min));
     $('#artBody').innerHTML = rows.map(a => { const st = a.stanje <= 0 ? '<span class="chip bad">Nema</span>' : a.stanje < a.min ? '<span class="chip warn">Ispod min.</span>' : '<span class="chip ok">OK</span>';
-      return `<tr class="click" data-id="${a.id}"><td class="mono">${a.sifra}</td><td class="name">${esc(a.naziv)}</td><td class="hide-sm t2">${a.brend}</td><td>${a.jm}</td><td class="num"><b>${fq(a.stanje, a.jm)}</b></td><td class="num muted">${fq(a.min, a.jm)}</td><td class="num">${fmt(a.nab)}</td><td class="num">${fmt(a.vp)}</td><td class="num">${fmt(a.mpc)}</td><td class="num">${fmt(a.stanje * a.nab)}</td><td>${st}</td></tr>`; }).join('') || `<tr><td colspan="11" class="empty">Nema artikala za ovaj filter.</td></tr>`;
-    $('#artFoot').innerHTML = `<tr><td colspan="9">${rows.length} artikala</td><td class="num">${fmt(sum(rows, a => a.stanje * a.nab))}</td><td></td></tr>`;
+      return `<tr class="click" data-id="${a.id}"><td class="mono">${a.sifra}</td><td class="name">${esc(a.naziv)}${a.serijski ? ' <span class="code" title="Prati se serijski broj">SN</span>' : ''}</td><td class="hide-sm t2">${grpPath(a.grupa)}</td><td>${a.jm}</td><td class="num"><b>${fq(a.stanje, a.jm)}</b></td><td class="num muted">${fq(a.min, a.jm)}</td><td class="num">${rezervisano(a.id) ? fq(rezervisano(a.id), a.jm) : '<span class="muted">—</span>'}</td><td class="num">${naruceno(a.id) ? fq(naruceno(a.id), a.jm) : '<span class="muted">—</span>'}</td><td class="num">${fmt(a.nab)}</td><td class="num">${fmt(a.vp)}</td><td class="num">${fmt(a.mpc)}</td><td class="num">${fmt(a.stanje * a.nab)}</td><td>${st}</td></tr>`; }).join('') || `<tr><td colspan="13" class="empty">Nema artikala za ovaj filter.</td></tr>`;
+    $('#artFoot').innerHTML = `<tr><td colspan="11">${rows.length} artikala</td><td class="num">${fmt(sum(rows, a => a.stanje * a.nab))}</td><td></td></tr>`;
     $('#artBody').querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = () => openKartica(+tr.dataset.id));
   };
   $('#artQ').oninput = e => { STATE.artFilter = e.target.value; draw(); };
@@ -765,8 +970,8 @@ function openKartica(id){
   const rows = MOV[id].map(m => { bal = r2(bal + m.ul - m.iz); return `<tr><td>${fd(m.datum)}</td><td class="mono">${m.dok}</td><td>${esc(m.opis)}</td><td class="num">${m.ul ? fq(m.ul, a.jm) : ''}</td><td class="num">${m.iz ? fq(m.iz, a.jm) : ''}</td><td class="num"><b>${fq(bal, a.jm)}</b></td></tr>`; });
   modal(`${a.sifra} · ${esc(a.naziv)}`, `
     <div class="kpis">
-      <div class="kpi"><div class="lbl">Stanje</div><div class="val" style="color:${a.stanje < a.min ? 'var(--bad)' : ''}">${fq(a.stanje, a.jm)} <small>${a.jm}</small></div><div class="sub">minimum ${fq(a.min, a.jm)} ${a.jm}</div></div>
-      <div class="kpi"><div class="lbl">Nabavna (prosjek)</div><div class="val">${fmt(a.nab)} <small>KM</small></div><div class="sub">${a.brend} · ${esc(DOB[a.dobId].naziv)}</div></div>
+      <div class="kpi"><div class="lbl">Stanje</div><div class="val" style="color:${a.stanje < a.min ? 'var(--bad)' : ''}">${fq(a.stanje, a.jm)} <small>${a.jm}</small></div><div class="sub">min. ${fq(a.min, a.jm)} · rezerv. ${fq(rezervisano(a.id), a.jm)} · naruč. ${fq(naruceno(a.id), a.jm)}</div></div>
+      <div class="kpi"><div class="lbl">Nabavna (prosjek)</div><div class="val">${fmt(a.nab)} <small>KM</small></div><div class="sub">${grpPath(a.grupa)} · ${esc(DOB[a.dobId].naziv)}${a.serijski ? ' · serijski broj' : ''}</div></div>
       <div class="kpi"><div class="lbl">VP / MPC</div><div class="val">${fmt(a.vp)} <small>KM</small></div><div class="sub">MPC ${km(a.mpc)} s PDV</div></div>
     </div>
     <h4 style="margin:0">Kartica artikla</h4>
@@ -794,7 +999,7 @@ ROUTES.ulaz = h => {
   const draw = () => {
     const q = STATE.ulazQ.toLowerCase();
     const rows = [...ULAZ].reverse().filter(u => !q || (u.kal + u.brojDob + DOB[u.dobId].naziv).toLowerCase().includes(q));
-    $('#ulBody').innerHTML = rows.map(u => `<tr class="click ${u.storno ? 'storno' : ''}" data-id="${u.id}"><td class="mono">${u.kal}</td><td>${fd(u.datum)}</td><td class="name">${esc(DOB[u.dobId].naziv)}<div class="sub">${DOB[u.dobId].tip === 'EU' ? 'Uvoz · ' + DOB[u.dobId].drzava : 'Domaći'}</div></td><td class="mono">${esc(u.brojDob)}</td><td class="num">${fmt(u.k.fakturna)}</td><td class="num">${fmt(u.k.totTr)}</td><td class="num"><b>${fmt(u.k.nova)}</b></td><td class="num">${fmt(u.k.vpV)}</td><td class="num">${fmt(u.k.ruc / u.k.nova * 100, 1)}</td><td>${statusPlac(u.placeno, u.ukupno, u.rokDat, u.storno)}</td></tr>`).join('');
+    $('#ulBody').innerHTML = rows.map(u => `<tr class="click ${u.storno ? 'storno' : ''}" data-id="${u.id}"><td><span class="code">${u.valuta === 'EUR' ? '110' : '100'}</span> <span class="mono">${u.kal}</span></td><td>${fd(u.datum)}</td><td class="name">${esc(DOB[u.dobId].naziv)}<div class="sub">${DOB[u.dobId].tip === 'EU' ? 'Uvoz · ' + DOB[u.dobId].drzava : 'Domaći'}</div></td><td class="mono">${esc(u.brojDob)}</td><td class="num">${fmt(u.k.fakturna)}</td><td class="num">${fmt(u.k.totTr)}</td><td class="num"><b>${fmt(u.k.nova)}</b></td><td class="num">${fmt(u.k.vpV)}</td><td class="num">${fmt(u.k.ruc / u.k.nova * 100, 1)}</td><td>${statusPlac(u.placeno, u.ukupno, u.rokDat, u.storno)}</td></tr>`).join('');
     $('#ulBody').querySelectorAll('tr').forEach(tr => tr.onclick = () => openKalk(+tr.dataset.id));
   };
   $('#ulQ').oninput = e => { STATE.ulazQ = e.target.value; draw(); };
@@ -828,7 +1033,7 @@ function renderKalkForm(){
   if (!KF) KF = newKalkDraft();
   const robniDob = DOBS.filter(d => d.vrsta === 'Roba');
   $('#view').innerHTML = `
-  <div class="toolbar"><a class="btn" href="#ulaz">← Lista kalkulacija</a><div class="grow"></div><span class="chip info">Nacrt – nije proknjiženo</span></div>
+  <div class="toolbar"><a class="btn" href="#ulaz">← Lista kalkulacija</a><div class="grow"></div>${KF.nd ? '<span class="chip mute plain">iz narudžbe ' + KF.nd + '</span>' : ''}<span class="code">${KF.valuta === 'EUR' ? '110' : '100'}</span><span class="chip info">Nacrt – nije proknjiženo</span></div>
   <div class="card"><div class="card-h"><h2>1. Ulazna faktura dobavljača</h2></div><div class="card-b"><div class="form-grid">
     <div class="field" style="grid-column:span 2"><label for="kDob">Dobavljač</label><select class="inp" id="kDob">${robniDob.map(d => `<option value="${d.id}" ${KF.dobId === d.id ? 'selected' : ''}>${esc(d.naziv)} (${d.tip === 'EU' ? d.drzava : 'BiH'})</option>`).join('')}</select></div>
     <div class="field"><label for="kBr">Broj fakture dobavljača</label><input class="inp" id="kBr" value="${esc(KF.brojDob)}"></div>
@@ -912,6 +1117,8 @@ function postKalk(){
   const doc = { ...KF, id:i, kal:'KAL-2026-' + String(i + 1).padStart(3, '0'), uf:'UF-2026-' + String(i + 1).padStart(3, '0'), k, korisnik:'Admin', storno:false };
   doc.pdv = KF.valuta === 'EUR' ? 0 : r2(k.fakturna * .17); doc.ukupno = r2(k.fakturna + doc.pdv); doc.placeno = 0; doc.rokDat = addDays(KF.datum, KF.rok);
   ULAZ.push(doc);
+  if (KF.nd) zatvoriNarudzbu(ND, KF.nd, KF.stavke);
+  k.rows.forEach(r => { if (r.a.serijski) for (let i = 0; i < r.s.kol; i++) SERIJE.push({ sn:r.a.sifra.replace('-', '') + '-26' + String(9000 + (++snC)).slice(-4), artId:r.a.id, ulDok:doc.kal, ulDatum:KF.datum, status:'Na stanju', kupId:null, racun:null, prodato:null, garDo:null }); });
   k.rows.forEach(r => { const a = r.a; const novoSt = r2(a.stanje + r.s.kol); if (novoSt > 0) a.nab = r2((a.stanje * a.nab + r.novaV) / novoSt); a.stanje = novoSt; a.vp = r.vp; a.mpc = r2(mpcOf(r.vp));
     MOV[a.id].push({ datum:KF.datum, dok:doc.kal, opis:DOB[doc.dobId].naziv, ul:r.s.kol, iz:0 }); });
   audit(new Date(), 'Admin', 'Proknjižio kalkulaciju', doc.kal);
@@ -924,7 +1131,7 @@ function postKalk(){
 ROUTES.izlaz = h => {
   if (h === 'izlaz-novi') return renderRacunForm();
   setTitle('Izlazni dokumenti', 'Veleprodaja');
-  const tabs = [['racuni','Računi',IZLAZ.length],['otpremnice','Otpremnice',OTP.length],['predracuni','Predračuni',PRED.length],['povrati','Povrati i storna',POVRAT.length + STORNA.length]];
+  const tabs = [['racuni','<span class="code">300</span>Računi',IZLAZ.length],['otpremnice','<span class="code">310</span>Otpremnice',OTP.length],['predracuni','<span class="code">320</span>Predračuni',PRED.length],['povrati','<span class="code">150 · 400</span>Povrati i storna',POVRAT.length + STORNA.length]];
   const mj = mKey(TODAY);
   const izMj = IZLAZ.filter(d => mKey(d.datum) === mj && !d.storno);
   const potr = IZLAZ.filter(d => !d.storno && d.placeno < d.ukupno - .005);
@@ -978,7 +1185,7 @@ function docSheet(type, d){
     <div style="text-align:right"><h4>${naslov}</h4><div style="font-family:var(--mono);font-size:14px">${d.broj}</div><div>Datum: ${fd(d.datum)}</div>${type === 'racun' ? `<div>Dospijeće: ${fd(d.rokDat)}</div>` : ''}${type === 'predracun' ? `<div>Važi do: ${fd(d.vazi)}</div>` : ''}${d.storno ? '<div style="margin-top:6px"><span class="stamp">STORNIRAN</span></div>' : ''}</div></div>
     <div class="pp"><div class="box"><b>Kupac</b>${esc(k.naziv)}<br>${k.grad}<br>${k.jib ? 'ID/JIB ' + k.jib : 'Fizičko lice'}</div><div class="box"><b>Detalji</b>${type === 'racun' ? 'Način plaćanja: ' + d.nacin + '<br>' : ''}${d.otp && type === 'racun' ? 'Otpremnica: ' + d.otp + '<br>' : ''}${type === 'otpremnica' && d.racun ? 'Uz račun: ' + d.racun + '<br>' : ''}Skladište: Glavno skladište</div></div>
     <table><thead><tr><th>#</th><th>Šifra</th><th>Naziv</th><th>JM</th><th style="text-align:right">Kol.</th>${cijene ? '<th style="text-align:right">Cijena</th><th style="text-align:right">Rabat</th><th style="text-align:right">Iznos</th>' : ''}</tr></thead><tbody>
-    ${d.stavke.map((s, i) => { const a = ART[s.artId]; return `<tr><td>${i + 1}</td><td>${a.sifra}</td><td>${esc(a.naziv)}</td><td>${a.jm}</td><td style="text-align:right">${fq(s.kol, a.jm)}</td>${cijene ? `<td style="text-align:right">${fmt(s.cijena)}</td><td style="text-align:right">${s.rabat ? s.rabat + ' %' : ''}</td><td style="text-align:right">${fmt(s.iznos)}</td>` : ''}</tr>`; }).join('')}</tbody></table>
+    ${d.stavke.map((s, i) => { const a = ART[s.artId]; return `<tr><td>${i + 1}</td><td>${a.sifra}</td><td>${esc(a.naziv)}${s.sn && s.sn.length ? '<div style="font-size:10.5px;color:#6b778a">SN: ' + s.sn.join(', ') + '</div>' : ''}</td><td>${a.jm}</td><td style="text-align:right">${fq(s.kol, a.jm)}</td>${cijene ? `<td style="text-align:right">${fmt(s.cijena)}</td><td style="text-align:right">${s.rabat ? s.rabat + ' %' : ''}</td><td style="text-align:right">${fmt(s.iznos)}</td>` : ''}</tr>`; }).join('')}</tbody></table>
     ${cijene ? `<div class="tt"><span>Osnovica za PDV</span><span>${km(d.osnovica)}</span><span>PDV ${CONFIG.pdvStopa} %</span><span>${km(d.pdv)}</span><span class="g">Za plaćanje</span><span class="g">${km(d.ukupno)}</span></div>` : ''}
     <div class="pf"><div>Robu izdao: ____________________</div><div>Robu primio: ____________________</div></div>
     <div style="margin-top:14px;color:#8a95a6;font-size:10.5px">Dokument napravljen u ${CONFIG.appName} ${CONFIG.version} · demo podaci · obavezni elementi računa: potvrditi s knjigovođom</div>
@@ -998,11 +1205,11 @@ function openDoc(type, d){
 let RF = null;
 function renderRacunForm(){
   setTitle('Novi račun', 'Izlazni dokumenti');
-  if (!RF) RF = { kupId:2, datum:TODAY, nacin:'Virman', otp:true, stavke:[{ artId:1, kol:6 }, { artId:40, kol:4 }, { artId:52, kol:1 }, { artId:79, kol:20 }] };
+  if (!RF) RF = { kupId:1, datum:TODAY, nacin:'Virman', otp:true, stavke:[{ artId:7, kol:3 }, { artId:0, kol:4 }, { artId:60, kol:1 }, { artId:69, kol:50 }] };
   const kup = KUP[RF.kupId];
-  RF.stavke.forEach(s => { if (s.cijena == null) s.cijena = ART[s.artId].vp; if (s.rabat == null) s.rabat = kup.rabat; });
+  RF.stavke.forEach(s => { if (s.cijena == null) s.cijena = ART[s.artId].vp; applyRabat(s); });
   $('#view').innerHTML = `
-  <div class="toolbar"><a class="btn" href="#izlaz">← Izlazni dokumenti</a><div class="grow"></div><span class="chip info">Nacrt</span></div>
+  <div class="toolbar"><a class="btn" href="#izlaz">← Izlazni dokumenti</a><div class="grow"></div>${RF.nk ? '<span class="chip mute plain">iz narudžbe ' + RF.nk + '</span>' : ''}<span class="code">300</span><span class="chip info">Nacrt</span></div>
   <div class="card"><div class="card-h"><h2>Kupac i uslovi</h2></div><div class="card-b"><div class="form-grid">
     <div class="field" style="grid-column:span 2"><label for="rKup">Kupac</label><select class="inp" id="rKup">${KUP.map(k => `<option value="${k.id}" ${k.id === RF.kupId ? 'selected' : ''}>${esc(k.naziv)} · ${k.grad}</option>`).join('')}</select></div>
     <div class="field"><label>Datum</label><input class="inp" value="${fd(RF.datum)}"></div>
@@ -1011,16 +1218,16 @@ function renderRacunForm(){
   </div>
   ${RF.nacin === 'Gotovina' ? `<div class="note" style="margin-top:14px">${ico('warn')}<div>Gotovinska prodaja može zahtijevati fiskalni račun (Tring FP1, faza 2). ${confirmTag()}</div></div>` : ''}</div></div>
   <div class="card"><div class="card-h"><h2>Stavke</h2></div>
-    <div class="table-wrap"><table class="tbl"><thead><tr><th style="min-width:240px">Artikl</th><th class="num">Na stanju</th><th class="num">Količina</th><th class="num">Cijena VP</th><th class="num">Rabat %</th><th class="num">Iznos</th><th></th></tr></thead><tbody id="rBody"></tbody></table></div>
+    <div class="table-wrap"><table class="tbl"><thead><tr><th style="min-width:240px">Artikl</th><th class="num">Na stanju</th><th class="num">Količina</th><th class="num">Cijena VP</th><th class="num">Rabat % · pravilo</th><th class="num">Iznos</th><th></th></tr></thead><tbody id="rBody"></tbody></table></div>
     <div class="card-b"><button class="btn" id="rAdd">${ico('plus')}Dodaj stavku</button></div></div>
   <div class="card"><div class="card-b" style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between">
     <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="rOtp" ${RF.otp ? 'checked' : ''}> Napravi i otpremnicu</label>
     <div id="rTot"></div></div>
     <div class="modal-f"><button class="btn" id="rPred">Sačuvaj kao predračun</button><button class="btn btn-primary" id="rPost">${ico('out')}Izdaj račun – zaliha se smanjuje</button></div></div>`;
-  $('#rKup').onchange = e => { RF.kupId = +e.target.value; RF.stavke.forEach(s => s.rabat = KUP[RF.kupId].rabat); renderRacunForm(); };
+  $('#rKup').onchange = e => { RF.kupId = +e.target.value; RF.stavke.forEach(s => s.rucno = false); renderRacunForm(); };
   $('#rNac').onchange = e => { RF.nacin = e.target.value; renderRacunForm(); };
   $('#rOtp').onchange = e => RF.otp = e.target.checked;
-  $('#rAdd').onclick = () => { RF.stavke.push({ artId:0, kol:1, cijena:ART[0].vp, rabat:KUP[RF.kupId].rabat }); drawRacun(); };
+  $('#rAdd').onclick = () => { RF.stavke.push({ artId:68, kol:1, cijena:ART[68].vp }); drawRacun(); };
   $('#rPred').onclick = () => { const d = racunaj({ broj:'PR-2026-' + String(PRED.length + 1).padStart(3, '0'), datum:new Date(TODAY), kupId:RF.kupId, stavke:RF.stavke.map(s => ({ ...s })), vazi:addDays(TODAY, 15), status:'Otvoren' }); PRED.push(d); audit(new Date(), 'Admin', 'Napravio predračun', d.broj); RF = null; STATE.izlazTab = 'predracuni'; toast(d.broj + ' sačuvan. Predračun ne mijenja zalihu.'); location.hash = 'izlaz'; };
   $('#rPost').onclick = () => {
     const nema = RF.stavke.filter(s => s.kol > ART[s.artId].stanje);
@@ -1031,68 +1238,346 @@ function renderRacunForm(){
       d.rokDat = addDays(TODAY, kup.rok); d.placeno = RF.nacin === 'Virman' ? 0 : d.ukupno;
       if (RF.otp){ d.otp = 'OT-2026-' + String(OTP.length + 1).padStart(4, '0'); OTP.push({ broj:d.otp, datum:d.datum, kupId:d.kupId, racun:d.broj, stavke:d.stavke, korisnik:'Admin' }); }
       IZLAZ.push(d);
+      d.stavke.forEach(s => { const a = ART[s.artId]; if (!a.serijski) return; const av = SERIJE.filter(x => x.artId === a.id && x.status === 'Na stanju'); const lst = s.snSel ? [av.find(x => x.sn === s.snSel), ...av.filter(x => x.sn !== s.snSel)] : av; s.sn = [];
+        lst.filter(Boolean).slice(0, s.kol).forEach(x => { Object.assign(x, { status:'Prodat', kupId:d.kupId, racun:d.broj, prodato:d.datum, garDo:addMonths(d.datum, 24) }); s.sn.push(x.sn); }); });
+      if (RF.nk) zatvoriNarudzbu(NK, RF.nk, d.stavke);
       d.stavke.forEach(s => { ART[s.artId].stanje = r2(ART[s.artId].stanje - s.kol); MOV[s.artId].push({ datum:d.datum, dok:d.otp || d.broj, opis:kup.naziv, ul:0, iz:s.kol }); });
-      audit(new Date(), 'Admin', 'Izdao račun', d.broj); RF = null; STATE.izlazTab = 'racuni'; location.hash = 'izlaz'; setTimeout(() => openDoc('racun', d), 50);
+      audit(new Date(), 'Admin', 'Izdao račun', d.broj); RF = null; STATE.izlazTab = 'racuni'; go('izlaz', () => openDoc('racun', d));
     });
   };
   drawRacun();
 }
 function drawRacun(){
-  $('#rBody').innerHTML = RF.stavke.map((s, i) => { const a = ART[s.artId]; return `<tr data-i="${i}"><td><select class="inp sm" data-f="artId">${ART.map(x => `<option value="${x.id}" ${x.id === s.artId ? 'selected' : ''}>${x.sifra} · ${esc(x.naziv)}</option>`).join('')}</select></td>
+  $('#rBody').innerHTML = RF.stavke.map((s, i) => { const a = ART[s.artId]; return `<tr data-i="${i}"><td><select class="inp sm" data-f="artId">${ART.map(x => `<option value="${x.id}" ${x.id === s.artId ? 'selected' : ''}>${x.sifra} · ${esc(x.naziv)}</option>`).join('')}</select>${snPick(s)}</td>
     <td class="num" data-c="st"></td><td><input class="inp sm n" data-f="kol" inputmode="decimal" value="${fq(s.kol, a.jm)}" style="width:80px"></td><td><input class="inp sm n" data-f="cijena" inputmode="decimal" value="${fmt(s.cijena)}" style="width:96px"></td>
-    <td><input class="inp sm n" data-f="rabat" inputmode="decimal" value="${fmt(s.rabat, 0)}" style="width:58px"></td><td class="num" data-c="iz" style="font-weight:600"></td><td><button class="icon-btn" style="width:30px;height:30px" data-del aria-label="Ukloni">${ico('trash')}</button></td></tr>`; }).join('');
+    <td><input class="inp sm n" data-f="rabat" inputmode="decimal" value="${fmt(s.rabat, 0)}" style="width:58px"><div class="sub" data-c="pr" style="max-width:180px;white-space:normal;text-align:right">${esc(s.pravilo || '')}</div></td><td class="num" data-c="iz" style="font-weight:600"></td><td><button class="icon-btn" style="width:30px;height:30px" data-del aria-label="Ukloni">${ico('trash')}</button></td></tr>`; }).join('');
   $('#rBody').querySelectorAll('tr').forEach(tr => { const s = RF.stavke[+tr.dataset.i];
     tr.querySelector('select').onchange = e => { s.artId = +e.target.value; s.cijena = ART[s.artId].vp; drawRacun(); };
-    tr.querySelectorAll('input').forEach(inp => inp.oninput = () => { s[inp.dataset.f] = parseNum(inp.value); updRacun(); });
+    tr.querySelectorAll('input').forEach(inp => inp.oninput = () => { s[inp.dataset.f] = parseNum(inp.value); if (inp.dataset.f === 'rabat'){ s.rucno = true; s.pravilo = 'Ručno upisano'; } updRacun(); });
+    const snSel = tr.querySelector('[data-sn]'); if (snSel){ s.snSel = s.snSel || snSel.value; snSel.value = s.snSel; snSel.onchange = () => s.snSel = snSel.value; }
     tr.querySelector('[data-del]').onclick = () => { RF.stavke.splice(+tr.dataset.i, 1); drawRacun(); }; });
   updRacun();
 }
 function updRacun(){
+  RF.stavke.forEach(applyRabat);
   const d = racunaj({ stavke:RF.stavke });
+  $('#rBody').querySelectorAll('tr').forEach((tr, i) => { const s = RF.stavke[i]; const ri_ = tr.querySelector('[data-f="rabat"]'); if (ri_ && document.activeElement !== ri_) ri_.value = fmt(s.rabat, 0); const pr = tr.querySelector('[data-c="pr"]'); if (pr) pr.textContent = s.pravilo || ''; });
   $('#rBody').querySelectorAll('tr').forEach((tr, i) => { const s = RF.stavke[i], a = ART[s.artId];
     tr.querySelector('[data-c="iz"]').textContent = fmt(s.iznos);
     tr.querySelector('[data-c="st"]').innerHTML = s.kol > a.stanje ? `<span class="chip bad">${fq(a.stanje, a.jm)} – nedovoljno</span>` : `${fq(a.stanje, a.jm)} ${a.jm}`; });
   $('#rTot').innerHTML = `<div class="totals"><span class="k">Osnovica</span><span class="v">${km(d.osnovica)}</span><span class="k">PDV ${CONFIG.pdvStopa} %</span><span class="v">${km(d.pdv)}</span><span class="k big">Ukupno</span><span class="v big">${km(d.ukupno)}</span></div>`;
 }
 
-/* ---------- DOBAVLJAČI ---------- */
-ROUTES.dobavljaci = () => {
-  setTitle('Dobavljači', 'Partneri');
-  const info = DOBS.map(d => { const fak = [...ULAZ.filter(u => u.dobId === d.id).map(u => ({ broj:u.brojDob, int:u.kal, datum:u.datum, uk:u.ukupno, pl:u.placeno, rok:u.rokDat })), ...USLUGE.filter(u => u.dobId === d.id).map(u => ({ broj:u.broj, int:u.opis, datum:u.datum, uk:u.ukupno, pl:u.placeno ? u.ukupno : 0, rok:u.rokDat }))];
-    return { d, fak, promet:sum(fak, f => f.uk), dug:sum(fak, f => f.uk - f.pl), dosp:sum(fak.filter(f => f.rok < TODAY), f => f.uk - f.pl) }; });
+/* ---------- SUBJEKTI (kupci i dobavljači u jednom šifarniku) ---------- */
+ROUTES.dobavljaci = () => { STATE.subjTip = 'D'; ROUTES.subjekti(); };
+ROUTES.kupci = () => { STATE.subjTip = 'K'; ROUTES.subjekti(); };
+function subjSaldo(s){
+  if (s.kupId != null) return sum(IZLAZ.filter(d => d.kupId === s.kupId && !d.storno), d => d.ukupno - d.placeno);
+  return -sum(otvDob().filter(x => x.key === s.key), x => x.ostalo);
+}
+ROUTES.subjekti = () => {
+  setTitle('Subjekti', 'Šifarnici');
+  const T = STATE.subjTip || 'S';
+  const mt = (s, t) => t === 'S' || (t === 'K' && s.tipovi.some(x => x.startsWith('Kupac'))) || (t === 'D' && s.tipovi.some(x => x.startsWith('Dobavljač'))) || (t === 'O' && s.tipovi.some(x => ['Prevoznik','Špediter','Dobavljač usluga','Servis'].includes(x)));
+  const f = s => mt(s, T), cnt = t => SUBJ.filter(s => mt(s, t)).length;
+  const pot = sum(otvKupci(), x => x.ostalo), oba = sum(otvDob(), x => x.ostalo);
   $('#view').innerHTML = `
   <div class="kpis">
-    <div class="kpi"><div class="lbl">Dobavljača</div><div class="val">${DOBS.length}</div><div class="sub">${DOBS.filter(d => d.tip === 'EU').length} iz EU · ${DOBS.filter(d => d.tip === 'BiH').length} domaćih</div></div>
-    <div class="kpi"><div class="lbl">Promet (6 mj., s PDV)</div><div class="val">${fmt(sum(info, x => x.promet))} <small>KM</small></div><div class="sub">robne fakture i usluge</div></div>
-    <div class="kpi"><div class="lbl">Neplaćeno</div><div class="val">${fmt(sum(info, x => x.dug))} <small>KM</small></div><div class="sub" style="color:var(--bad)">dospjelo ${km(sum(info, x => x.dosp))}</div></div>
+    <div class="kpi"><div class="lbl">Subjekata u šifarniku</div><div class="val">${SUBJ.length}</div><div class="sub">${cnt('K')} kupaca · ${cnt('D')} dobavljača · ${cnt('O')} ostalih</div></div>
+    <div class="kpi"><div class="lbl">Potraživanja od kupaca</div><div class="val">${fmt(pot)} <small>KM</small></div><div class="sub">otvorene stavke</div></div>
+    <div class="kpi"><div class="lbl">Obaveze prema dobavljačima</div><div class="val">${fmt(oba)} <small>KM</small></div><div class="sub">otvorene stavke</div></div>
   </div>
-  <div class="card"><div class="card-h"><h2>Lista dobavljača</h2><div class="right"><button class="btn btn-primary" id="dNew">${ico('plus')}Novi dobavljač</button></div></div>
-  <div class="table-wrap"><table class="tbl"><thead><tr><th>Naziv</th><th>Država / grad</th><th>Tip</th><th>ID / PDV broj</th><th>Valuta</th><th class="num">Rok</th><th class="num">Promet 6 mj.</th><th class="num">Neplaćeno</th><th class="num">Dospjelo</th></tr></thead><tbody>
-  ${info.map(x => `<tr class="click" data-id="${x.d.id}"><td class="name">${esc(x.d.naziv)}<div class="sub">${x.d.vrsta}</div></td><td>${x.d.drzava}<div class="sub">${x.d.grad}</div></td><td>${x.d.tip === 'EU' ? '<span class="chip info plain">EU · uvoz</span>' : '<span class="chip mute plain">Domaći</span>'}</td><td class="mono">${x.d.idBroj}</td><td>${x.d.valuta}</td><td class="num">${x.d.rok} d</td><td class="num">${fmt(x.promet)}</td><td class="num">${x.dug > .005 ? '<b>' + fmt(x.dug) + '</b>' : '<span class="muted">0,00</span>'}</td><td class="num" style="color:${x.dosp > .005 ? 'var(--bad)' : ''}">${x.dosp > .005 ? fmt(x.dosp) : '—'}</td></tr>`).join('')}
-  </tbody></table></div></div>`;
-  $('#dNew').onclick = () => toast('Forma za novog dobavljača dolazi u fazi 1.');
-  document.querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = () => { const x = info.find(i => i.d.id === +tr.dataset.id);
-    modal(esc(x.d.naziv), `<dl class="kv"><dt>Država / grad</dt><dd>${x.d.drzava}, ${x.d.grad}</dd><dt>ID / PDV broj</dt><dd class="mono">${x.d.idBroj}</dd><dt>Vrsta</dt><dd>${x.d.vrsta}</dd><dt>Valuta / rok plaćanja</dt><dd>${x.d.valuta} · ${x.d.rok} dana</dd><dt>Artikala u šifarniku</dt><dd>${ART.filter(a => a.dobId === x.d.id).length}</dd></dl>
-      <div class="table-wrap" style="border:1px solid var(--border);border-radius:8px;max-height:340px;overflow:auto"><table class="tbl"><thead><tr><th>Faktura</th><th>Datum</th><th>Opis / kalkulacija</th><th>Dospijeće</th><th class="num">Iznos</th><th>Status</th></tr></thead><tbody>
-      ${[...x.fak].reverse().map(f => `<tr><td class="mono">${esc(f.broj)}</td><td>${fd(f.datum)}</td><td class="t2">${esc(f.int)}</td><td>${fd(f.rok)}</td><td class="num">${fmt(f.uk)}</td><td>${statusPlac(f.pl, f.uk, f.rok)}</td></tr>`).join('')}</tbody></table></div>`,
-      `<button class="btn" data-act="pay">Evidentiraj plaćanje</button><button class="btn btn-primary" data-close>Zatvori</button>`, true);
-    $('[data-act="pay"]').onclick = () => toast('Plaćanja se u fazi 1 unose ručno ili iz bankovnog izvoda (Excel).'); });
+  <div class="card"><div class="card-h"><div class="toolbar" style="width:100%">
+    <div class="seg" id="sTip">${[['S','Svi'],['K','Kupci'],['D','Dobavljači'],['O','Prevoz, špedicija, servis']].map(([k, l]) => `<button data-t="${k}" class="${T === k ? 'active' : ''}">${l} (${cnt(k)})</button>`).join('')}</div>
+    <input class="inp grow" id="sQ" placeholder="Naziv, mjesto ili ID broj…" style="min-width:160px">
+    <button class="btn btn-primary" id="sNew">${ico('plus')}Novi subjekt</button></div></div>
+  <div class="table-wrap"><table class="tbl"><thead><tr><th>Šifra</th><th>Naziv</th><th>Tip</th><th>Mjesto</th><th>ID / PDV broj</th><th>Grupa</th><th>Prioritet isporuke</th><th class="num">Rok</th><th class="num">Saldo</th></tr></thead><tbody id="sBody"></tbody></table></div></div>
+  <p class="muted" style="font-size:12.5px;margin:0">Jedna firma je jedan subjekt, i kad je i kupac i dobavljač (npr. Alati Centar). Saldo: plus = duguje nama, minus = mi dugujemo.</p>`;
+  const draw = () => { const q = ($('#sQ').value || '').toLowerCase();
+    $('#sBody').innerHTML = SUBJ.filter(s => f(s) && (!q || (s.naziv + s.mjesto + s.idBroj).toLowerCase().includes(q))).map(s => { const sal = subjSaldo(s);
+      return `<tr class="click" data-k="${s.key}"><td class="mono">${s.sifra}</td><td class="name">${esc(s.naziv)}</td><td>${s.tipovi.map(t => `<span class="chip ${t.startsWith('Kupac') ? 'info' : t.startsWith('Dobavljač') ? 'ok' : 'mute'} plain" style="margin:1px">${t}</span>`).join('')}</td><td>${esc(s.mjesto)}</td><td class="mono">${s.idBroj}</td><td class="t2">${s.grupa}</td><td>${s.prioritet === 'Visok' ? '<span class="chip warn plain">Visok</span>' : '<span class="t2">' + s.prioritet + '</span>'}</td><td class="num">${s.rok ? s.rok + ' d' : 'odmah'}</td><td class="num" style="${sal < -.005 ? 'color:var(--bad)' : ''}">${Math.abs(sal) > .005 ? '<b>' + fmt(sal) + '</b>' : '<span class="muted">0,00</span>'}</td></tr>`; }).join('');
+    $('#sBody').querySelectorAll('tr').forEach(tr => tr.onclick = () => openSubjekt(tr.dataset.k)); };
+  $('#sTip').onclick = e => { const b = e.target.closest('button'); if (!b) return; STATE.subjTip = b.dataset.t; ROUTES.subjekti(); };
+  $('#sQ').oninput = draw;
+  $('#sNew').onclick = () => toast('Novi subjekt: jedna forma, a tipovi (kupac, dobavljač, prevoznik…) se štikliraju.');
+  draw();
+};
+function openSubjekt(key){
+  const s = SUBJ.find(x => x.key === key);
+  let docs;
+  if (s.kupId != null) docs = [...IZLAZ.filter(d => d.kupId === s.kupId)].reverse().map(d => ({ broj:d.broj, datum:d.datum, opis:d.otp ? 'uz ' + d.otp : d.nacin, rok:d.rokDat, uk:d.ukupno, pl:d.placeno, st:d.storno }));
+  else docs = [...ULAZ.filter(u => u.dobId === s.dobId).map(u => ({ broj:u.brojDob, datum:u.datum, opis:u.kal, rok:u.rokDat, uk:u.ukupno, pl:u.placeno })), ...USLUGE.filter(u => u.dobId === s.dobId).map(u => ({ broj:u.broj, datum:u.datum, opis:u.opis, rok:u.rokDat, uk:u.ukupno, pl:u.placeno ? u.ukupno : 0 }))].sort((a, b) => b.datum - a.datum);
+  modal(`${s.sifra} · ${esc(s.naziv)}`, `<dl class="kv"><dt>Tip</dt><dd>${s.tipovi.join(', ')}</dd><dt>Mjesto</dt><dd>${esc(s.mjesto)}</dd><dt>ID / PDV broj</dt><dd class="mono">${s.idBroj}</dd><dt>Grupa</dt><dd>${s.grupa}</dd><dt>Valuta / rok</dt><dd>${s.valuta} · ${s.rok ? s.rok + ' dana' : 'odmah'}</dd><dt>Prioritet isporuke</dt><dd>${s.prioritet}</dd><dt>Saldo</dt><dd><b>${km(subjSaldo(s))}</b></dd></dl>
+    <div class="table-wrap" style="border:1px solid var(--border);border-radius:8px;max-height:320px;overflow:auto"><table class="tbl"><thead><tr><th>Dokument</th><th>Datum</th><th>Opis</th><th>Dospijeće</th><th class="num">Iznos</th><th>Status</th></tr></thead><tbody>
+    ${docs.map(d => `<tr class="${d.st ? 'storno' : ''}"><td class="mono">${esc(d.broj)}</td><td>${fd(d.datum)}</td><td class="t2">${esc(d.opis)}</td><td>${fd(d.rok)}</td><td class="num">${fmt(d.uk)}</td><td>${statusPlac(d.pl, d.uk, d.rok, d.st)}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Nema dokumenata.</td></tr>'}</tbody></table></div>`,
+    `${s.kupId != null ? '<button class="btn" data-act="ios">IOS – izvod otvorenih stavki</button>' : ''}<button class="btn btn-primary" data-close>Zatvori</button>`, true);
+  const b = $('[data-act="ios"]'); if (b) b.onclick = () => openIOS(key);
+}
+
+/* ---------- KLASIFIKACIJA ---------- */
+ROUTES.klasifikacija = () => {
+  setTitle('Klasifikacija artikala', 'Šifarnici');
+  const sel = STATE.klasSel || 'KC';
+  const arts = g => ART.filter(a => inGroup(a, g.id));
+  $('#view').innerHTML = `
+  <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,2fr)" id="klGrid">
+    <div class="card"><div class="card-h"><h2>Grupe</h2><div class="right"><button class="btn btn-sm" id="klNew">${ico('plus')}Nova grupa</button></div></div>
+      <div class="tree">${KLAS.map(g => { const l = arts(g); return `<button data-g="${g.id}" class="${g.parent ? 'lvl1' : ''} ${sel === g.id ? 'sel' : ''}">${g.parent ? '' : ico('tree').replace('<svg', '<svg width="15" height="15"')}<span>${g.naziv}</span><span class="meta">${l.length} · ${fmt(sum(l, a => a.stanje * a.nab), 0)} KM</span></button>`; }).join('')}</div></div>
+    <div class="card"><div class="card-h"><h2>${grpPath(sel)}</h2><div class="right"><span class="muted" style="font-size:12.5px">Grupa služi za filtere, izvještaje i popuste</span></div></div>
+      <div class="table-wrap"><table class="tbl"><thead><tr><th>Šifra</th><th>Naziv</th><th>Podgrupa</th><th class="num">Stanje</th><th class="num">Vrijednost</th></tr></thead><tbody>
+      ${ART.filter(a => inGroup(a, sel)).map(a => `<tr class="click" data-id="${a.id}"><td class="mono">${a.sifra}</td><td class="name">${esc(a.naziv)}</td><td class="t2">${grp(a.grupa).naziv}</td><td class="num">${fq(a.stanje, a.jm)} ${a.jm}</td><td class="num">${fmt(a.stanje * a.nab)}</td></tr>`).join('')}</tbody></table></div></div>
+  </div>`;
+  if (innerWidth < 900) $('#klGrid').style.gridTemplateColumns = 'minmax(0,1fr)';
+  document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { STATE.klasSel = b.dataset.g; ROUTES.klasifikacija(); });
+  document.querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = () => openKartica(+tr.dataset.id));
+  $('#klNew').onclick = () => toast('Grupe se dodaju i premještaju u fazi 1 (do 3 nivoa).');
 };
 
-/* ---------- KUPCI ---------- */
-ROUTES.kupci = () => {
-  setTitle('Kupci', 'Partneri');
-  const info = KUP.map(k => { const r = IZLAZ.filter(d => d.kupId === k.id && !d.storno); return { k, n:r.length, promet:sum(r, d => d.osnovica), dug:sum(r, d => d.ukupno - d.placeno), zadnji:r.length ? r[r.length - 1].datum : null }; }).sort((a, b) => b.promet - a.promet);
+/* ---------- FORMULE CIJENA I POPUSTA ---------- */
+ROUTES.formule = () => {
+  setTitle('Cijene i popusti', 'Šifarnici');
+  STATE.ft = STATE.ft || { kupId:1, artId:7, kol:3 };
+  const opis = f => [f.kupId != null ? 'kupac: ' + KUP[f.kupId].naziv : f.grupaKup ? 'grupa kupaca: ' + f.grupaKup : 'svi kupci', f.grupaArt ? 'artikli: ' + grpPath(f.grupaArt) : f.rinfuza ? 'artikli u rinfuzi (l, kg)' : 'svi artikli', f.minKol ? 'od ' + fmt(f.minKol, 0) + ' kom/l/kg' : ''].filter(Boolean).join(' · ');
+  const vazi = f => f.od ? fd(f.od) + ' – ' + fd(f.do) : 'stalno';
+  const aktivnoSada = f => f.aktivna && (!f.od || (TODAY >= f.od && TODAY <= f.do));
   $('#view').innerHTML = `
-  <div class="kpis"><div class="kpi"><div class="lbl">Kupaca</div><div class="val">${KUP.length}</div><div class="sub">${KUP_FIRME.length} firmi · ${KUP_FIZ.length} fizičkih lica</div></div>
-  <div class="kpi"><div class="lbl">Promet VP (6 mj., bez PDV)</div><div class="val">${fmt(sum(info, x => x.promet))} <small>KM</small></div><div class="sub">${IZLAZ.length} računa</div></div>
-  <div class="kpi"><div class="lbl">Potraživanja</div><div class="val">${fmt(sum(info, x => x.dug))} <small>KM</small></div><div class="sub">${info.filter(x => x.dug > .005).length} kupaca duguje</div></div></div>
-  <div class="card"><div class="card-h"><h2>Lista kupaca</h2><div class="right"><button class="btn btn-primary" id="kNew">${ico('plus')}Novi kupac</button></div></div>
-  <div class="table-wrap"><table class="tbl"><thead><tr><th>Naziv</th><th>Tip</th><th>Grad</th><th>ID/JIB</th><th class="num">Rabat</th><th class="num">Rok</th><th class="num">Računa</th><th class="num">Promet</th><th class="num">Duguje</th><th>Zadnja kupovina</th></tr></thead><tbody>
-  ${info.map(x => `<tr><td class="name">${esc(x.k.naziv)}</td><td>${x.k.tip === 'Firma' ? '<span class="chip info plain">Firma</span>' : '<span class="chip mute plain">Fizičko lice</span>'}</td><td>${x.k.grad}</td><td class="mono">${x.k.jib || '—'}</td><td class="num">${x.k.rabat} %</td><td class="num">${x.k.rok ? x.k.rok + ' d' : 'odmah'}</td><td class="num">${x.n}</td><td class="num">${fmt(x.promet)}</td><td class="num">${x.dug > .005 ? '<b>' + fmt(x.dug) + '</b>' : '<span class="muted">0,00</span>'}</td><td>${x.zadnji ? fd(x.zadnji) : '—'}</td></tr>`).join('')}
-  </tbody></table></div></div>`;
-  $('#kNew').onclick = () => toast('Forma za novog kupca dolazi u fazi 1.');
+  <div class="card"><div class="card-h"><h2>Pravila popusta</h2><div class="right"><span class="muted" style="font-size:12.5px">Kad važi više pravila:</span><div class="seg" id="fMode"><button data-m="prioritet" class="${FORM_MODE === 'prioritet' ? 'active' : ''}">Prvo po prioritetu</button><button data-m="najveci" class="${FORM_MODE === 'najveci' ? 'active' : ''}">Najveći popust</button></div><button class="btn btn-primary btn-sm" id="fNew">${ico('plus')}Novo pravilo</button></div></div>
+  <div class="table-wrap"><table class="tbl"><thead><tr><th class="num">Prioritet</th><th>Naziv</th><th>Kome i na šta</th><th class="num">Popust</th><th>Važi</th><th>Status</th></tr></thead><tbody>
+  ${FORMULE.map(f => `<tr><td class="num">${f.prio}</td><td class="name">${esc(f.naziv)}</td><td class="t2">${esc(opis(f))}</td><td class="num"><b>${fmt(f.popust, 0)} %</b></td><td>${vazi(f)}</td><td>${aktivnoSada(f) ? '<span class="chip ok">Važi danas</span>' : '<span class="chip mute">Isteklo</span>'}</td></tr>`).join('')}
+  <tr><td class="num muted">—</td><td class="name">Osnovni rabat kupca</td><td class="t2">ako nijedno pravilo ne važi: rabat iz šifarnika subjekta</td><td class="num">po kupcu</td><td>stalno</td><td><span class="chip ok">Važi danas</span></td></tr>
+  </tbody></table></div></div>
+  <div class="card"><div class="card-h"><h2>Probaj: koja cijena važi?</h2><div class="right">${confirmTag('Popusti se ne sabiraju – potvrditi')}</div></div><div class="card-b"><div class="form-grid">
+    <div class="field" style="grid-column:span 2"><label for="ftK">Kupac</label><select class="inp" id="ftK">${KUP.map(k => `<option value="${k.id}" ${k.id === STATE.ft.kupId ? 'selected' : ''}>${esc(k.naziv)} (${k.grupa})</option>`).join('')}</select></div>
+    <div class="field" style="grid-column:span 2"><label for="ftA">Artikl</label><select class="inp" id="ftA">${ART.map(a => `<option value="${a.id}" ${a.id === STATE.ft.artId ? 'selected' : ''}>${a.sifra} · ${esc(a.naziv)}</option>`).join('')}</select></div>
+    <div class="field"><label for="ftQ">Količina</label><input class="inp n" id="ftQ" inputmode="decimal" value="${fmt(STATE.ft.kol, 0)}"></div>
+  </div><div id="ftOut" style="margin-top:14px"></div></div></div>`;
+  const calc = () => { const k = KUP[STATE.ft.kupId], a = ART[STATE.ft.artId]; const r = rabatFor(k, a, STATE.ft.kol); const c = r2(a.vp * (1 - r.popust / 100));
+    $('#ftOut').innerHTML = `<div class="kpis"><div class="kpi"><div class="lbl">VP cijena</div><div class="val">${fmt(a.vp)} <small>KM</small></div><div class="sub">${grpPath(a.grupa)}</div></div><div class="kpi"><div class="lbl">Primijenjeno</div><div class="val" style="font-size:16px;white-space:normal">${esc(r.naziv)}</div><div class="sub">popust ${fmt(r.popust, 0)} %</div></div><div class="kpi"><div class="lbl">Cijena za kupca</div><div class="val">${fmt(c)} <small>KM</small></div><div class="sub">iznos ${km(c * STATE.ft.kol)} bez PDV</div></div></div>
+    ${r.m.length > 1 ? `<p class="t2" style="margin:10px 0 0;font-size:13px">Važi ${r.m.length} pravila: ${r.m.map(f => esc(f.naziv) + ' (' + f.popust + ' %)').join(', ')}. Bira se ${FORM_MODE === 'prioritet' ? 'prvo po prioritetu' : 'najveći popust'}.</p>` : ''}`; };
+  $('#ftK').onchange = e => { STATE.ft.kupId = +e.target.value; calc(); };
+  $('#ftA').onchange = e => { STATE.ft.artId = +e.target.value; calc(); };
+  $('#ftQ').oninput = e => { STATE.ft.kol = parseNum(e.target.value); calc(); };
+  $('#fMode').onclick = e => { const b = e.target.closest('button'); if (!b) return; FORM_MODE = b.dataset.m; ROUTES.formule(); };
+  $('#fNew').onclick = () => toast('Novo pravilo: biraš kupca ili grupu kupaca, grupu artikala, količinu, period i popust.');
+  calc();
 };
+
+/* ---------- VRSTE DOKUMENATA ---------- */
+ROUTES.vrste = () => {
+  setTitle('Vrste dokumenata', 'Šifarnici');
+  const st = s => s === 'preview' ? '<span class="chip ok">U previewu</span>' : s === 'nacrt' ? '<span class="chip warn">Nacrt – faza 1</span>' : '<span class="chip mute">' + s + '</span>';
+  $('#view').innerHTML = `<div class="note info">${ico('info')}<div>Ovo je <b>nacrt naših šifri</b>. Kad pošalješ spisak dokumenata (ulazi, ino ulazi, interni izlazi…), uskladimo šifre, nazive i pravila. Šifra se može kucati u „Novi dokument“ (npr. 300 → novi račun).</div></div>
+  <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>Šifra</th><th>Naziv</th><th>Grupa</th><th>Zaliha</th><th>KIF / KUF</th><th>Numeracija</th><th>Nastaje iz</th><th>Status</th></tr></thead><tbody>
+  ${VD.map(v => `<tr><td><span class="code">${v.sifra}</span></td><td class="name">${esc(v.naziv)}</td><td class="t2">${v.grupa}</td><td class="num" style="text-align:center;font-weight:600;color:${v.zaliha === '+' ? 'var(--ok)' : v.zaliha === '−' ? 'var(--bad)' : 'var(--text-2)'}">${v.zaliha}</td><td>${v.knjiga === 'potvrditi' ? confirmTag('Potvrditi') : v.knjiga}</td><td class="mono">${v.num}GGGG-…</td><td class="t2">${esc(v.izvor)}</td><td>${st(v.status)}</td></tr>`).join('')}
+  </tbody></table></div></div>`;
+};
+
+/* ---------- SERIJSKI BROJEVI ---------- */
+function serStatus(x){ return x.status === 'Prodat' ? '<span class="chip info">Prodat</span>' : x.status === 'Na servisu' ? '<span class="chip warn">Na servisu</span>' : '<span class="chip ok">' + (x.povrat ? 'Na stanju (povrat)' : 'Na stanju') + '</span>'; }
+function garChip(x){ if (!x.garDo) return '—'; const d = daysBetween(TODAY, x.garDo); return fd(x.garDo) + (d < 0 ? ' <span class="chip mute plain">istekla</span>' : d < 60 ? ' <span class="chip warn plain">ističe</span>' : ''); }
+ROUTES.serijski = () => {
+  setTitle('Serijski brojevi', 'Roba');
+  const st = STATE.serSt || '';
+  $('#view').innerHTML = `
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Praćenih komada</div><div class="val">${SERIJE.length}</div><div class="sub">${ART.filter(a => a.serijski).length} artikala sa serijskim brojem</div></div>
+    <div class="kpi"><div class="lbl">Na stanju</div><div class="val">${SERIJE.filter(x => x.status === 'Na stanju').length}</div><div class="sub">mora biti jednako stanju zalihe</div></div>
+    <div class="kpi"><div class="lbl">Prodato, u garanciji</div><div class="val">${SERIJE.filter(x => x.garDo && x.garDo >= TODAY).length}</div><div class="sub">garancija 24 mjeseca</div></div>
+    <div class="kpi"><div class="lbl">Na servisu</div><div class="val">${SERIJE.filter(x => x.status === 'Na servisu').length}</div><div class="sub"><a href="#servis">otvori servis</a></div></div>
+  </div>
+  <div class="card"><div class="card-h"><div class="toolbar" style="width:100%"><input class="inp grow" id="snQ" placeholder="Serijski broj, artikl ili kupac…" style="min-width:160px">
+    <select class="inp" id="snS"><option value="">Svi statusi</option>${['Na stanju','Prodat','Na servisu'].map(s => `<option ${st === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div></div>
+  <div class="table-wrap"><table class="tbl"><thead><tr><th>Serijski broj</th><th>Artikl</th><th>Ulaz</th><th>Status</th><th>Kupac</th><th>Račun</th><th>Garancija do</th></tr></thead><tbody id="snBody"></tbody></table></div></div>`;
+  const draw = () => { const q = ($('#snQ').value || '').toLowerCase();
+    $('#snBody').innerHTML = [...SERIJE].sort((a, b) => (b.prodato || b.ulDatum) - (a.prodato || a.ulDatum)).filter(x => (!STATE.serSt || x.status === STATE.serSt) && (!q || (x.sn + ART[x.artId].naziv + (x.kupId != null ? KUP[x.kupId].naziv : '')).toLowerCase().includes(q))).map(x => `<tr class="click" data-sn="${x.sn}"><td class="mono"><b>${x.sn}</b></td><td>${esc(ART[x.artId].naziv)}<div class="sub mono">${ART[x.artId].sifra}</div></td><td class="mono">${x.ulDok}<div class="sub" style="font-family:var(--font)">${fd(x.ulDatum)}</div></td><td>${serStatus(x)}</td><td>${x.kupId != null ? esc(KUP[x.kupId].naziv) : '—'}</td><td class="mono">${x.racun || '—'}</td><td>${garChip(x)}</td></tr>`).join('');
+    $('#snBody').querySelectorAll('tr').forEach(tr => tr.onclick = () => openSerijski(tr.dataset.sn)); };
+  $('#snQ').oninput = draw; $('#snS').onchange = e => { STATE.serSt = e.target.value; draw(); };
+  draw();
+};
+function openSerijski(sn){
+  const x = SERIJE.find(s => s.sn === sn), a = ART[x.artId];
+  const ev = [[x.ulDatum, 'Ulaz na zalihu', x.ulDok === 'PS' ? 'Početno stanje' : x.ulDok + ' · ' + DOB[a.dobId].naziv]];
+  if (x.prodato) ev.push([x.prodato, 'Prodat', x.racun + ' · ' + KUP[x.kupId].naziv]);
+  SERVIS.filter(s => s.sn === sn).forEach(s => ev.push([s.datum, 'Servis ' + s.broj, s.kvar + ' · ' + s.status]));
+  if (x.povrat) ev.push([TODAY, 'Povrat od kupca', x.povrat]);
+  ev.sort((p, q) => p[0] - q[0]);
+  modal('Serijski broj ' + sn, `<dl class="kv"><dt>Artikl</dt><dd>${a.sifra} · ${esc(a.naziv)}</dd><dt>Status</dt><dd>${serStatus(x)}</dd><dt>Garancija do</dt><dd>${garChip(x)}</dd></dl>
+    <div class="timeline">${ev.map(e => `<div class="ev"><b>${e[1]}</b> <span class="muted">· ${fd(e[0])}</span><div class="t2" style="font-size:13px">${esc(e[2])}</div></div>`).join('')}</div>`,
+    `<button class="btn" data-act="srv">Otvori servisni nalog</button><button class="btn btn-primary" data-close>Zatvori</button>`);
+  $('[data-act="srv"]').onclick = () => toast('Novi servisni nalog (600) se otvara s već upisanim artiklom, kupcem i garancijom.');
+}
+
+/* ---------- NARUDŽBE ---------- */
+ROUTES.nkupci = () => renderNarudzbe('K');
+ROUTES.ndob = () => renderNarudzbe('D');
+const narChip = s => ['Isporučena','Primljena'].includes(s) ? `<span class="chip ok">${s}</span>` : s === 'Otkazana' ? `<span class="chip mute">${s}</span>` : s.startsWith('Djelimično') ? `<span class="chip warn">${s}</span>` : `<span class="chip info">${s}</span>`;
+function renderNarudzbe(t){
+  const K = t === 'K', L = K ? NK : ND;
+  setTitle(K ? 'Narudžbe kupaca' : 'Narudžbe dobavljačima', 'Narudžbe · vrsta ' + (K ? '210' : '200'));
+  const val = n => sum(n.stavke, s => s.kol * s.cijena), rest = n => sum(n.stavke, s => (s.kol - s.isp) * s.cijena);
+  const open = L.filter(isOpen), rok = n => K ? n.rok : n.ocekivano;
+  $('#view').innerHTML = `
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Otvorene narudžbe</div><div class="val">${open.length}</div><div class="sub">od ${L.length} ukupno</div></div>
+    <div class="kpi"><div class="lbl">${K ? 'Rezervisano (neisporučeno)' : 'Naručeno, nije stiglo'}</div><div class="val">${fmt(sum(open, rest))} <small>KM</small></div><div class="sub">${K ? 'po VP cijeni' : 'po nabavnoj cijeni'}</div></div>
+    <div class="kpi"><div class="lbl">${K ? 'Hitne' : 'Stiže u 7 dana'}</div><div class="val">${K ? open.filter(n => n.prioritet === 'Hitno').length : open.filter(n => n.ocekivano >= TODAY && daysBetween(TODAY, n.ocekivano) <= 7).length}</div><div class="sub">${K ? 'prioritet isporuke' : 'očekivani prijem'}</div></div>
+    <div class="kpi alert"><div class="lbl">Kasne</div><div class="val">${open.filter(n => rok(n) < TODAY).length}</div><div class="sub">rok prošao</div></div>
+  </div>
+  <div class="card"><div class="card-h"><h2>${K ? 'Narudžbe kupaca' : 'Narudžbe dobavljačima'}</h2><div class="right"><button class="btn btn-primary" id="nNew">${ico('plus')}Nova narudžba</button></div></div>
+  <div class="table-wrap"><table class="tbl"><thead><tr><th>Broj</th><th>Datum</th><th>${K ? 'Kupac' : 'Dobavljač'}</th><th>${K ? 'Rok isporuke' : 'Očekivano'}</th>${K ? '<th>Prioritet</th>' : ''}<th class="num">Vrijednost</th><th style="min-width:130px">${K ? 'Isporučeno' : 'Primljeno'}</th><th>Status</th></tr></thead><tbody>
+  ${[...L].reverse().map((n, i) => { const p = val(n) ? (1 - rest(n) / val(n)) * 100 : 0; const late = isOpen(n) && rok(n) < TODAY;
+    return `<tr class="click" data-b="${n.broj}"><td class="mono">${n.broj}</td><td>${fd(n.datum)}</td><td class="name">${esc(K ? KUP[n.kupId].naziv : DOB[n.dobId].naziv)}</td><td>${fd(rok(n))}${late ? ' <span class="chip bad plain">kasni</span>' : ''}</td>${K ? `<td>${n.prioritet === 'Hitno' ? '<span class="chip warn plain">Hitno</span>' : '<span class="t2">Normalno</span>'}</td>` : ''}<td class="num">${fmt(val(n))}</td><td><div class="bar-in" style="margin:0"><span style="width:${p.toFixed(0)}%;background:${p >= 99.9 ? 'var(--ok)' : 'var(--s1)'}"></span></div><div class="sub">${fmt(p, 0)} %</div></td><td>${narChip(n.status)}</td></tr>`; }).join('')}
+  </tbody></table></div></div>`;
+  $('#nNew').onclick = () => toast(K ? 'Nova narudžba kupca rezerviše robu; iz nje se jednim klikom pravi otpremnica i račun.' : 'Nova narudžba dobavljaču; prijedlog količina iz artikala ispod minimuma (faza 1).');
+  document.querySelectorAll('tr[data-b]').forEach(tr => tr.onclick = () => openNarudzba(t, tr.dataset.b));
+}
+function openNarudzba(t, broj){
+  const K = t === 'K', n = (K ? NK : ND).find(x => x.broj === broj);
+  modal(`${K ? 'Narudžba kupca' : 'Narudžba dobavljaču'} ${n.broj}`, `<dl class="kv"><dt>${K ? 'Kupac' : 'Dobavljač'}</dt><dd>${esc(K ? KUP[n.kupId].naziv : DOB[n.dobId].naziv)}</dd><dt>Datum</dt><dd>${fd(n.datum)}</dd><dt>${K ? 'Rok isporuke' : 'Očekivano'}</dt><dd>${fd(K ? n.rok : n.ocekivano)}</dd><dt>Status</dt><dd>${narChip(n.status)}</dd></dl>
+    <div class="table-wrap" style="border:1px solid var(--border);border-radius:8px"><table class="tbl"><thead><tr><th>Artikl</th><th class="num">Naručeno</th><th class="num">${K ? 'Isporučeno' : 'Primljeno'}</th><th class="num">Ostalo</th>${K ? '<th class="num">Na stanju</th>' : ''}<th class="num">Cijena</th></tr></thead><tbody>
+    ${n.stavke.map(s => { const a = ART[s.artId], o = s.kol - s.isp; return `<tr><td><span class="mono">${a.sifra}</span> ${esc(a.naziv)}</td><td class="num">${fq(s.kol, a.jm)}</td><td class="num">${fq(s.isp, a.jm)}</td><td class="num"><b>${fq(o, a.jm)}</b></td>${K ? `<td class="num" style="${a.stanje < o ? 'color:var(--bad)' : ''}">${fq(a.stanje, a.jm)}</td>` : ''}<td class="num">${fmt(s.cijena)}</td></tr>`; }).join('')}</tbody></table></div>`,
+    `${isOpen(n) ? `<button class="btn btn-primary" data-act="mk">${K ? ico('out') + 'Napravi otpremnicu i račun' : ico('in') + 'Napravi kalkulaciju (prijem)'}</button>` : ''}<button class="btn" data-close>Zatvori</button>`, true);
+  const b = $('[data-act="mk"]'); if (!b) return;
+  b.onclick = () => { const rem = n.stavke.filter(s => s.kol - s.isp > 0);
+    if (K){ RF = { kupId:n.kupId, datum:TODAY, nacin:'Virman', otp:true, nk:n.broj, stavke:rem.map(s => ({ artId:s.artId, kol:Math.min(s.kol - s.isp, Math.max(0, ART[s.artId].stanje)) || (s.kol - s.isp) })) }; location.hash = 'izlaz-novi'; }
+    else { const d = DOB[n.dobId]; KF = { dobId:n.dobId, brojDob:'', datum:TODAY, valuta:d.valuta, rok:d.rok, nd:n.broj, tr:{ prevoz:d.tip === 'EU' ? 180 : 0, carina:0, spedicija:d.tip === 'EU' ? 95 : 0, ostalo:0 }, stavke:rem.map(s => { const a = ART[s.artId]; return { artId:a.id, kol:s.kol - s.isp, fc:r2(a.nab / (d.valuta === 'EUR' ? CONFIG.kursEUR : 1) * .95), rabat:0, vp:a.vp }; }) }; location.hash = 'ulaz-nova'; } };
+}
+function zatvoriNarudzbu(L, broj, stavke){ const n = L.find(x => x.broj === broj); if (!n) return;
+  stavke.forEach(s => { const x = n.stavke.find(q => q.artId === s.artId); if (x) x.isp = Math.min(x.kol, r2(x.isp + s.kol)); });
+  const done = n.stavke.every(s => s.isp >= s.kol), any = n.stavke.some(s => s.isp > 0);
+  n.status = L === NK ? (done ? 'Isporučena' : any ? 'Djelimično isporučena' : n.status) : (done ? 'Primljena' : any ? 'Djelimično primljena' : n.status); }
+
+/* ---------- SERVIS ---------- */
+const srvChip = s => s === 'Vraćeno kupcu' ? '<span class="chip ok">Vraćeno kupcu</span>' : s === 'Završeno' ? '<span class="chip ok">Završeno</span>' : s === 'Čeka dio' ? '<span class="chip warn">Čeka dio</span>' : `<span class="chip info">${s}</span>`;
+ROUTES.servis = () => {
+  setTitle('Servisni nalozi', 'Servis · vrsta 600');
+  const open = SERVIS.filter(s => SRV_OPEN.includes(s.status));
+  $('#view').innerHTML = `
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Otvoreni nalozi</div><div class="val">${open.length}</div><div class="sub">od ${SERVIS.length} u 6 mjeseci</div></div>
+    <div class="kpi"><div class="lbl">U garanciji</div><div class="val">${open.filter(s => s.vrsta === 'Garancija').length}</div><div class="sub">otvorenih, bez naplate kupcu</div></div>
+    <div class="kpi"><div class="lbl">Čeka dio</div><div class="val">${open.filter(s => s.status === 'Čeka dio').length}</div><div class="sub">naručeno od dobavljača</div></div>
+    <div class="kpi"><div class="lbl">Reklamacije robe</div><div class="val">${SERVIS.filter(s => s.vrsta === 'Reklamacija robe').length}</div><div class="sub">hemija i potrošni</div></div>
+  </div>
+  <div class="card"><div class="card-h"><h2>Nalozi</h2><div class="right"><button class="btn btn-primary" id="srvNew">${ico('plus')}Novi servisni nalog</button></div></div>
+  <div class="table-wrap"><table class="tbl"><thead><tr><th>Nalog</th><th>Primljeno</th><th>Kupac</th><th>Artikl / serijski broj</th><th>Vrsta</th><th>Opis</th><th>Serviser</th><th>Status</th></tr></thead><tbody>
+  ${[...SERVIS].reverse().map(s => `<tr class="click" data-b="${s.broj}"><td class="mono">${s.broj}</td><td>${fd(s.datum)}</td><td class="name">${esc(KUP[s.kupId].naziv)}</td><td>${esc(ART[s.artId].naziv)}<div class="sub mono">${s.sn || ART[s.artId].sifra}</div></td><td>${s.vrsta === 'Garancija' ? '<span class="chip ok plain">Garancija</span>' : s.vrsta === 'Plaćeni servis' ? '<span class="chip info plain">Plaćeni servis</span>' : '<span class="chip warn plain">Reklamacija robe</span>'}</td><td class="t2">${esc(s.kvar)}</td><td>${s.serviser}</td><td>${srvChip(s.status)}</td></tr>`).join('')}
+  </tbody></table></div></div>`;
+  $('#srvNew').onclick = () => toast('Novi nalog: upišeš ili skeniraš serijski broj, a kupac, račun i garancija se popune sami.');
+  document.querySelectorAll('tr[data-b]').forEach(tr => tr.onclick = () => openServis(tr.dataset.b));
+};
+function openServis(broj){
+  const s = SERVIS.find(x => x.broj === broj), a = ART[s.artId];
+  const steps = ['Primljeno','U radu','Čeka dio','Završeno','Vraćeno kupcu']; const idx = steps.indexOf(s.status);
+  const ev = [[s.datum, 'Primljeno od kupca', s.kvar]];
+  if (idx >= 1) ev.push([capT(addDays(s.datum, 1)), 'Dijagnoza', s.serviser]);
+  if (s.status === 'Čeka dio' || (idx >= 3 && s.dijelovi.length)) ev.push([capT(addDays(s.datum, 2)), 'Naručen dio', s.dijelovi.map(d => ART[d.artId].naziv).join(', ') || 'rezervni dio']);
+  if (idx >= 3) ev.push([capT(addDays(s.datum, 6)), 'Popravak završen', s.dijelovi.length ? 'Utrošak dijelova: dokument 365' : 'Bez utroška dijelova']);
+  if (idx >= 4) ev.push([capT(addDays(s.datum, 8)), 'Vraćeno kupcu', s.vrsta === 'Plaćeni servis' ? 'Račun za servis' : 'Bez naplate']);
+  const dijV = sum(s.dijelovi, d => ART[d.artId].vp * d.kol);
+  modal(`Servisni nalog ${s.broj}`, `<dl class="kv"><dt>Kupac</dt><dd>${esc(KUP[s.kupId].naziv)}</dd><dt>Artikl</dt><dd>${a.sifra} · ${esc(a.naziv)}</dd>${s.sn ? `<dt>Serijski broj</dt><dd class="mono">${s.sn}</dd>` : ''}<dt>Vrsta</dt><dd>${s.vrsta}</dd><dt>Status</dt><dd>${srvChip(s.status)}</dd>
+    <dt>Trošak za kupca</dt><dd>${s.vrsta === 'Plaćeni servis' ? km(r2((s.rad + dijV) * (1 + CONFIG.pdvStopa / 100))) + ' s PDV (rad ' + km(s.rad) + ' + dijelovi ' + km(dijV) + ')' : 'bez naplate'}</dd></dl>
+    <div class="timeline">${ev.map(e => `<div class="ev"><b>${e[1]}</b> <span class="muted">· ${fd(e[0])}</span><div class="t2" style="font-size:13px">${esc(e[2])}</div></div>`).join('')}</div>`,
+    `<button class="btn" data-act="dio">Utrošak dijelova (365)</button><button class="btn" data-act="pr">Štampaj prijemni list</button><button class="btn btn-primary" data-close>Zatvori</button>`);
+  $('[data-act="dio"]').onclick = () => toast('Dijelovi za popravak izlaze sa zalihe dokumentom 365 (interni izlaz), vezanim za ovaj nalog.');
+  $('[data-act="pr"]').onclick = () => toast('Prijemni list za kupca (PDF) dolazi u fazi 1.');
+}
+
+/* ---------- OTVORENE STAVKE I IOS ---------- */
+ROUTES.otvorene = () => {
+  setTitle('Otvorene stavke i IOS', 'Novac');
+  const K = (STATE.osTab || 'K') === 'K';
+  const items = K ? otvKupci() : otvDob();
+  const B = [0, 0, 0, 0]; items.forEach(x => B[bucket(x)] += x.ostalo);
+  const by = {}; items.forEach(x => { by[x.key] = by[x.key] || { key:x.key, subj:x.subj, b:[0, 0, 0, 0], n:0, tot:0 }; by[x.key].b[bucket(x)] += x.ostalo; by[x.key].n++; by[x.key].tot += x.ostalo; });
+  const rows = Object.values(by).sort((a, b) => b.tot - a.tot);
+  $('#view').innerHTML = `
+  <div class="card"><div class="tabs" id="osTabs" style="padding:0 8px"><button data-t="K" class="${K ? 'active' : ''}">Kupci – potraživanja</button><button data-t="D" class="${!K ? 'active' : ''}">Dobavljači – obaveze</button></div>
+  <div class="kpis" style="padding:14px 16px">${[['Ukupno otvoreno', sum(B)], ['Nije dospjelo', B[0]], ['Kasni 1–30 dana', B[1]], ['Kasni 31–60 dana', B[2]], ['Kasni preko 60 dana', B[3]]].map(([l, v], i) => `<div class="kpi ${i >= 3 && v > 0 ? 'alert' : ''}"><div class="lbl">${l}</div><div class="val">${fmt(v)} <small>KM</small></div></div>`).join('')}</div>
+  <div class="table-wrap"><table class="tbl"><thead><tr><th>${K ? 'Kupac' : 'Dobavljač'}</th><th class="num">Dok.</th><th class="num">Nije dospjelo</th><th class="num">1–30</th><th class="num">31–60</th><th class="num">60+</th><th class="num">Ukupno</th><th></th></tr></thead><tbody>
+  ${rows.map(r => `<tr class="click" data-k="${r.key}"><td class="name">${esc(r.subj)}</td><td class="num">${r.n}</td>${r.b.map((v, i) => `<td class="num" style="${i >= 2 && v > 0 ? 'color:var(--bad);font-weight:600' : ''}">${v > 0 ? fmt(v) : '<span class="muted">—</span>'}</td>`).join('')}<td class="num"><b>${fmt(r.tot)}</b></td><td>${K ? '<button class="btn btn-sm" data-ios="' + r.key + '">IOS</button>' : ''}</td></tr>`).join('')}
+  </tbody><tfoot><tr><td>Ukupno</td><td class="num">${items.length}</td>${B.map(v => `<td class="num">${fmt(v)}</td>`).join('')}<td class="num">${fmt(sum(B))}</td><td></td></tr></tfoot></table></div></div>
+  <p class="muted" style="font-size:12.5px;margin:0">Uplate i isplate se zatvaraju iz bankovnih izvoda i blagajne. Kamate na kašnjenje nisu uključene.</p>`;
+  $('#osTabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; STATE.osTab = b.dataset.t; ROUTES.otvorene(); };
+  document.querySelectorAll('tr[data-k]').forEach(tr => tr.onclick = e => { if (e.target.closest('[data-ios]')) return openIOS(tr.dataset.k); openSubjekt(tr.dataset.k); });
+};
+function openIOS(key){
+  const s = SUBJ.find(x => x.key === key), it = otvKupci().filter(x => x.key === key), f = CONFIG.firma;
+  modal('IOS – ' + esc(s.naziv), `<div class="paper-wrap"><div class="paper">
+    <div class="ph"><div><div style="font-weight:700;font-size:15px">${f.naziv}</div><div>${f.adresa}, ${f.grad}</div><div>ID/JIB ${f.jib}</div></div><div style="text-align:right"><h4>IZVOD OTVORENIH STAVKI</h4><div>na dan ${fd(TODAY)}</div></div></div>
+    <div class="pp"><div class="box"><b>Za</b>${esc(s.naziv)}<br>${esc(s.mjesto)}<br>${s.idBroj !== '—' ? 'ID/JIB ' + s.idBroj : ''}</div><div class="box"><b>Saldo u našu korist</b><span style="font-size:16px;font-weight:700">${km(sum(it, x => x.ostalo))}</span></div></div>
+    <table><thead><tr><th>Dokument</th><th>Datum</th><th>Dospijeće</th><th style="text-align:right">Iznos</th><th style="text-align:right">Plaćeno</th><th style="text-align:right">Ostalo</th></tr></thead><tbody>
+    ${it.map(x => `<tr><td>${x.broj}</td><td>${fd(x.datum)}</td><td>${fd(x.rok)}</td><td style="text-align:right">${fmt(x.iznos)}</td><td style="text-align:right">${fmt(x.placeno)}</td><td style="text-align:right"><b>${fmt(x.ostalo)}</b></td></tr>`).join('')}</tbody></table>
+    <p>Molimo da stanje potvrdite ili osporite u roku od 8 dana. Ako ne dobijemo odgovor, smatramo da je stanje usaglašeno.</p>
+    <div class="pf"><div>Potvrđujemo stanje: ____________________</div><div>Osporavamo iznos: ____________________</div></div>
+    <div style="margin-top:14px;color:#8a95a6;font-size:10.5px">Tekst i rok IOS-a: potvrditi s knjigovođom · demo podaci</div></div></div>`,
+    `<button class="btn" data-act="pdf">${ico('dl')}Preuzmi PDF</button><button class="btn btn-primary" data-close>Zatvori</button>`, true);
+  $('[data-act="pdf"]').onclick = () => toast('IOS kao PDF (i slanje mailom kupcu) dolazi u fazi 1.');
+}
+
+/* ---------- BANKA I IZVODI ---------- */
+const bankChip = s => s === 'Nije povezano' ? '<span class="chip bad">Nije povezano</span>' : s === 'Povezano ručno' ? '<span class="chip info">Povezano ručno</span>' : s === 'Trošak banke' ? '<span class="chip mute">Trošak banke</span>' : '<span class="chip ok">Povezano automatski</span>';
+ROUTES.izvodi = () => {
+  setTitle('Banka i izvodi', 'Novac · vrsta 700');
+  const nep = BANKA.filter(t => t.status === 'Nije povezano'); const last = IZVODI[IZVODI.length - 1];
+  const mj = mKey(TODAY); const tm = BANKA.filter(t => mKey(t.datum) === mj);
+  $('#view').innerHTML = `
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Stanje računa</div><div class="val">${fmt(last.kraj)} <small>KM</small></div><div class="sub">po izvodu br. ${last.broj} od ${fd(last.datum)}</div></div>
+    <div class="kpi"><div class="lbl">Uplate – ${MJESECI[TODAY.getMonth()]}</div><div class="val">${fmt(sum(tm, t => t.u))} <small>KM</small></div></div>
+    <div class="kpi"><div class="lbl">Isplate – ${MJESECI[TODAY.getMonth()]}</div><div class="val">${fmt(sum(tm, t => t.i))} <small>KM</small></div></div>
+    <div class="kpi ${nep.length ? 'alert' : ''}"><div class="lbl">Nepovezane stavke</div><div class="val">${nep.length}</div><div class="sub">čekaju ručno povezivanje</div></div>
+  </div>
+  ${nep.length ? `<div class="card"><div class="card-h"><h2>Treba povezati</h2></div><div class="table-wrap"><table class="tbl"><thead><tr><th>Datum</th><th>Partner</th><th>Opis</th><th class="num">Uplata</th><th></th></tr></thead><tbody>${nep.map(t => `<tr><td>${fd(t.datum)}</td><td class="name">${esc(t.partner)}</td><td class="t2">${esc(t.opis)}</td><td class="num"><b>${fmt(t.u)}</b></td><td><button class="btn btn-sm" data-pov>Poveži s računom</button></td></tr>`).join('')}</tbody></table></div></div>` : ''}
+  <div class="card"><div class="card-h"><h2>Izvodi</h2><div class="right">${confirmTag('Format izvoza banke – potvrditi koja banka')}<button class="btn btn-primary" id="bImp">${ico('upload')}Uvezi izvod</button></div></div>
+  <div class="table-wrap"><table class="tbl"><thead><tr><th class="num">Izvod</th><th>Datum</th><th class="num">Stavki</th><th class="num">Prethodno stanje</th><th class="num">Uplate</th><th class="num">Isplate</th><th class="num">Novo stanje</th><th>Povezanost</th></tr></thead><tbody>
+  ${[...IZVODI].reverse().slice(0, 60).map(z => { const n = z.stavke.filter(t => t.status === 'Nije povezano').length; return `<tr class="click" data-z="${z.broj}"><td class="num mono">${z.broj}</td><td>${fd(z.datum)}</td><td class="num">${z.stavke.length}</td><td class="num">${fmt(z.poc)}</td><td class="num">${fmt(sum(z.stavke, t => t.u))}</td><td class="num">${fmt(sum(z.stavke, t => t.i))}</td><td class="num"><b>${fmt(z.kraj)}</b></td><td>${n ? '<span class="chip bad">' + n + ' nepovezano</span>' : '<span class="chip ok">Sve povezano</span>'}</td></tr>`; }).join('')}
+  </tbody></table></div></div>`;
+  $('#bImp').onclick = () => toast('Uvoz izvoda: učitaš datoteku iz e-bankinga, a program sam poveže uplate s računima po pozivu na broj i iznosu.');
+  document.querySelectorAll('[data-pov]').forEach(b => b.onclick = () => toast('Biraš otvoreni račun kupca; uplata se zatvara, a višak ostaje kao avans.'));
+  document.querySelectorAll('tr[data-z]').forEach(tr => tr.onclick = () => { const z = IZVODI.find(x => x.broj === +tr.dataset.z);
+    modal(`Izvod br. ${z.broj} od ${fd(z.datum)}`, `<dl class="kv"><dt>Prethodno stanje</dt><dd>${km(z.poc)}</dd><dt>Novo stanje</dt><dd><b>${km(z.kraj)}</b></dd></dl><div class="table-wrap" style="border:1px solid var(--border);border-radius:8px"><table class="tbl"><thead><tr><th>Partner</th><th>Opis</th><th>Veza</th><th class="num">Uplata</th><th class="num">Isplata</th><th>Status</th></tr></thead><tbody>
+      ${z.stavke.map(t => `<tr><td class="name">${esc(t.partner)}</td><td class="t2">${esc(t.opis)}</td><td class="mono">${t.veza || '—'}</td><td class="num">${t.u ? fmt(t.u) : ''}</td><td class="num">${t.i ? fmt(t.i) : ''}</td><td>${bankChip(t.status)}</td></tr>`).join('')}</tbody></table></div>`, `<button class="btn btn-primary" data-close>Zatvori</button>`, true); });
+};
+
+/* ---------- BLAGAJNA ---------- */
+ROUTES.blagajna = () => {
+  setTitle('Blagajna', 'Novac · vrsta 710');
+  const months = []; for (let m = 4; m <= 10; m++) months.push('2026-' + p2(m + 1));
+  const mj = STATE.blMj || '2026-10';
+  const rows = BLAG.filter(b => mKey(b.datum) === mj); const prev = BLAG.filter(b => mKey(b.datum) < mj);
+  const poc = prev.length ? prev[prev.length - 1].saldo : 350;
+  $('#view').innerHTML = `
+  <div class="note">${ico('warn')}<div>Ovdje je samo gotovina iz veleprodaje. Maloprodajni pazar ide kroz kasu i fiskalni uređaj (faza 2). Blagajnički maksimum i pravila pologa ${confirmTag()}</div></div>
+  <div class="card"><div class="card-h"><div class="toolbar" style="width:100%"><div class="field"><label for="blMj">Period</label><select class="inp" id="blMj">${months.map(m => `<option value="${m}" ${mj === m ? 'selected' : ''}>${MJESECI[+m.slice(5) - 1]} 2026</option>`).join('')}</select></div><div class="grow"></div>
+    <button class="btn" id="blIs" style="align-self:flex-end">Nova isplatnica</button><button class="btn btn-primary" id="blUp" style="align-self:flex-end">${ico('plus')}Nova uplatnica</button></div></div>
+  <div class="kpis" style="padding:14px 16px 0"><div class="kpi"><div class="lbl">Početno stanje</div><div class="val">${fmt(poc)} <small>KM</small></div></div><div class="kpi"><div class="lbl">Uplate</div><div class="val">${fmt(sum(rows, r => r.u))} <small>KM</small></div></div><div class="kpi"><div class="lbl">Isplate</div><div class="val">${fmt(sum(rows, r => r.i))} <small>KM</small></div></div><div class="kpi"><div class="lbl">Stanje na kraju</div><div class="val">${fmt(rows.length ? rows[rows.length - 1].saldo : poc)} <small>KM</small></div></div></div>
+  <div class="table-wrap" style="margin-top:14px"><table class="tbl"><thead><tr><th>Datum</th><th>Broj</th><th>Vrsta</th><th>Opis</th><th class="num">Uplata</th><th class="num">Isplata</th><th class="num">Saldo</th></tr></thead><tbody>
+  ${rows.map(r => `<tr><td>${fd(r.datum)}</td><td class="mono">${r.broj}</td><td>${r.vrsta === 'Uplatnica' ? '<span class="chip ok plain">Uplatnica</span>' : '<span class="chip warn plain">Isplatnica</span>'}</td><td>${esc(r.opis)}</td><td class="num">${r.u ? fmt(r.u) : ''}</td><td class="num">${r.i ? fmt(r.i) : ''}</td><td class="num"><b>${fmt(r.saldo)}</b></td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nema prometa u periodu.</td></tr>'}
+  </tbody></table></div></div>`;
+  $('#blMj').onchange = e => { STATE.blMj = e.target.value; ROUTES.blagajna(); };
+  $('#blUp').onclick = $('#blIs').onclick = () => toast('Blagajnički nalozi se štampaju i ulaze u blagajnički dnevnik (faza 1).');
+};
+
+
+/* ---------- pomoćno: navigacija s akcijom, novi dokument, rabat ---------- */
+function go(hash, fn){ if (location.hash.slice(1) === hash){ route(); if (fn) fn(); } else { STATE.afterRoute = fn || null; location.hash = hash; } }
+function applyRabat(s){ if (s.rucno) return; const r = rabatFor(KUP[RF.kupId], ART[s.artId], s.kol); s.rabat = r.popust; s.pravilo = r.naziv; }
+function snPick(s){ const a = ART[s.artId]; if (!a.serijski) return ''; const av = SERIJE.filter(x => x.artId === a.id && x.status === 'Na stanju');
+  if (!av.length) return '<div class="sub" style="color:var(--bad)">nema serijskih brojeva na stanju</div>';
+  if (s.kol > 1) return `<div class="sub">SN: ${fmt(s.kol, 0)} kom, bira se pri izdavanju (prvo najstariji)</div>`;
+  return `<div class="sub" style="margin-top:4px;display:flex;gap:6px;align-items:center">SN <select class="inp sm" data-sn style="height:26px">${av.map(x => `<option ${x.sn === s.snSel ? 'selected' : ''}>${x.sn}</option>`).join('')}</select></div>`; }
+function openNewDocMenu(){ const m = $('#ndMenu');
+  m.innerHTML = `<div style="padding:6px"><input class="inp" id="ndQ" placeholder="Šifra (npr. 300) ili naziv…" style="width:100%" autocomplete="off"></div><div id="ndList"></div>`; m.hidden = false;
+  const draw = q => { q = q.trim().toLowerCase(); $('#ndList').innerHTML = VD.filter(v => !q || v.sifra.startsWith(q) || v.naziv.toLowerCase().includes(q)).map(v => `<button data-vd="${v.sifra}"><span class="code">${v.sifra}</span><span style="flex:1">${esc(v.naziv)}</span>${v.status !== 'preview' ? '<span class="muted" style="font-size:11.5px">' + v.status + '</span>' : ''}</button>`).join('') || '<div class="empty">Nema te vrste.</div>';
+    $('#ndList').querySelectorAll('[data-vd]').forEach(b => b.onclick = () => { m.hidden = true; newDoc(b.dataset.vd); }); };
+  draw(''); $('#ndQ').oninput = e => draw(e.target.value); $('#ndQ').onkeydown = e => { if (e.key === 'Enter'){ const f = $('#ndList [data-vd]'); if (f) f.click(); } }; $('#ndQ').focus(); }
+function newDoc(c){
+  const map = { '100':() => { KF = newKalkDraft(); Object.assign(KF, { dobId:9, valuta:'KM', rok:15, brojDob:'412/26', tr:{ prevoz:35, carina:0, spedicija:0, ostalo:0 }, stavke:[{ artId:78, kol:300, fc:r2(ART[78].nab * .97), rabat:0, vp:ART[78].vp }] }); go('ulaz-nova'); },
+    '110':() => { KF = newKalkDraft(); go('ulaz-nova'); }, '300':() => { RF = null; go('izlaz-novi'); }, '310':() => { RF = null; go('izlaz-novi'); }, '320':() => { RF = null; go('izlaz-novi'); },
+    '200':() => go('ndob'), '210':() => go('nkupci'), '600':() => go('servis'), '700':() => go('izvodi'), '710':() => go('blagajna'), '190':() => go('inventura'), '390':() => go('inventura'),
+    '150':() => { STATE.izlazTab = 'povrati'; go('izlaz'); }, '400':() => { STATE.izlazTab = 'povrati'; go('izlaz'); } };
+  if (map[c]) map[c](); else toast('Forma za vrstu ' + c + ' (' + VD.find(v => v.sifra === c).naziv + ') dolazi u fazi 1.'); }
 
 /* ---------- INVENTURA ---------- */
 ROUTES.inventura = () => {
@@ -1216,7 +1701,10 @@ ROUTES.postavke = () => {
     <tr><td class="name">Maloprodaja u KIF-u</td><td>Jedan zbirni red dnevno (Z izvještaj)</td><td>${confirmTag()}</td></tr>
     <tr><td class="name">Šta mora na fiskalni račun</td><td>Gotovina i kartica; virman ne</td><td>${confirmTag()}</td></tr>
     <tr><td class="name">Dozvoljeni kalo / tretman manjka</td><td>Nije podešeno</td><td>${confirmTag()}</td></tr>
-    <tr><td class="name">Numeracija dokumenata</td><td class="mono">RN-GGGG-0000 · OT- · PR- · KAL- · ST- · PV-</td><td><span class="chip mute">Podesivo</span></td></tr>
+    <tr><td class="name">Numeracija dokumenata</td><td>Po vrsti dokumenta (Šifarnici → Vrste dokumenata)</td><td><span class="chip mute">Podesivo</span></td></tr>
+    <tr><td class="name">Više pravila popusta odjednom</td><td>Prvo po prioritetu, popusti se ne sabiraju</td><td>${confirmTag()}</td></tr>
+    <tr><td class="name">Garancija na mašine</td><td>24 mjeseca od dana prodaje</td><td>${confirmTag()}</td></tr>
+    <tr><td class="name">Rezervacija po narudžbi kupca</td><td>Smanjuje raspoloživo, ne knjižno stanje</td><td><span class="chip mute">Podesivo</span></td></tr>
   </tbody></table></div></div>
   <div class="grid g-1-1">
   <div class="card"><div class="card-h"><h2>Izvoz KIF/KUF za knjigovođu</h2></div><div class="card-b"><dl class="kv"><dt>Aktivni profil</dt><dd>${CONFIG.kifKufProfil}</dd><dt>Format programera</dt><dd><span class="chip warn">Čeka specifikaciju</span></dd><dt>Kolone</dt><dd>Rb, Datum, Broj, Partner, ID/PDV, Vrsta, Osnovica, PDV, Ukupno</dd></dl>
@@ -1262,13 +1750,17 @@ function doSearch(q){
   const arts = ART.filter(a => (a.sifra + ' ' + a.naziv).toLowerCase().includes(q)).slice(0, 6);
   const parts = [...DOBS.map(d => ({ t:'dob', d })), ...KUP.map(k => ({ t:'kup', d:k }))].filter(x => x.d.naziv.toLowerCase().includes(q)).slice(0, 5);
   const docs = [...IZLAZ.map(d => ({ t:'rn', d, b:d.broj })), ...ULAZ.map(u => ({ t:'kal', d:u, b:u.kal + ' ' + u.brojDob }))].filter(x => x.b.toLowerCase().includes(q)).slice(0, 5);
+  const sers = SERIJE.filter(x => x.sn.toLowerCase().includes(q)).slice(0, 4);
+  const nars = [...NK.map(n => ({ t:'nk', n })), ...ND.map(n => ({ t:'nd', n }))].filter(x => x.n.broj.toLowerCase().includes(q)).slice(0, 4);
   let h = '';
   if (arts.length) h += '<div class="grp">Artikli</div>' + arts.map(a => `<button data-s="art:${a.id}"><span class="mono">${a.sifra}</span><span style="flex:1">${esc(a.naziv)}</span><span class="muted">${fq(a.stanje, a.jm)} ${a.jm}</span></button>`).join('');
   if (parts.length) h += '<div class="grp">Partneri</div>' + parts.map(x => `<button data-s="${x.t}:${x.d.id}"><span style="flex:1">${esc(x.d.naziv)}</span><span class="muted">${x.t === 'dob' ? 'dobavljač' : 'kupac'}</span></button>`).join('');
   if (docs.length) h += '<div class="grp">Dokumenti</div>' + docs.map(x => `<button data-s="${x.t}:${x.d.id}"><span class="mono">${x.t === 'rn' ? x.d.broj : x.d.kal}</span><span style="flex:1">${esc(x.t === 'rn' ? KUP[x.d.kupId].naziv : DOB[x.d.dobId].naziv)}</span><span class="muted">${fd(x.d.datum)}</span></button>`).join('');
+  if (sers.length) h += '<div class="grp">Serijski brojevi</div>' + sers.map(x => `<button data-s="sn:${x.sn}"><span class="mono">${x.sn}</span><span style="flex:1">${esc(ART[x.artId].naziv)}</span><span class="muted">${x.status}</span></button>`).join('');
+  if (nars.length) h += '<div class="grp">Narudžbe</div>' + nars.map(x => `<button data-s="${x.t}:${x.n.broj}"><span class="mono">${x.n.broj}</span><span style="flex:1">${esc(x.t === 'nk' ? KUP[x.n.kupId].naziv : DOB[x.n.dobId].naziv)}</span><span class="muted">${x.n.status}</span></button>`).join('');
   box.innerHTML = h || '<div class="empty">Ništa nije pronađeno.</div>'; box.hidden = false;
   box.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { const [t, id] = b.dataset.s.split(':'); box.hidden = true; $('#search').value = '';
-    if (t === 'art') openKartica(+id); else if (t === 'rn') openDoc('racun', IZLAZ.find(d => d.id === +id)); else if (t === 'kal') { location.hash = 'ulaz'; setTimeout(() => openKalk(+id), 30); } else location.hash = t === 'dob' ? 'dobavljaci' : 'kupci'; });
+    if (t === 'art') openKartica(+id); else if (t === 'rn') openDoc('racun', IZLAZ.find(d => d.id === +id)); else if (t === 'kal') go('ulaz', () => openKalk(+id)); else if (t === 'sn') openSerijski(id); else if (t === 'nk' || t === 'nd') go(t === 'nk' ? 'nkupci' : 'ndob', () => openNarudzba(t === 'nk' ? 'K' : 'D', id)); else { STATE.subjTip = t === 'dob' ? 'D' : 'K'; go('subjekti', () => openSubjekt((t === 'dob' ? 'D' : 'K') + id)); } });
 }
 function getTheme(){ const t = document.documentElement.dataset.theme; if (t) return t; return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
 function paintThemeBtn(){ $('#themeBtn').innerHTML = ico(getTheme() === 'dark' ? 'sun' : 'moon'); }
@@ -1279,12 +1771,13 @@ function closeDrawer(){ $('#sidebar').classList.remove('open'); $('#overlay').hi
 (function init(){
   try { const t = localStorage.getItem('mr-tema'); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; } catch (e) {}
   applyBrand(); paintThemeBtn();
-  $('#burger').innerHTML = ico('menu'); $('#searchIco').innerHTML = ico('search');
+  $('#burger').innerHTML = ico('menu'); $('#searchIco').innerHTML = ico('search'); $('#ndIco').innerHTML = ico('plus');
+  $('#ndBtn').onclick = () => { if ($('#ndMenu').hidden) openNewDocMenu(); else $('#ndMenu').hidden = true; };
   $('#burger').onclick = openDrawer; $('#overlay').onclick = closeDrawer;
   $('#themeBtn').onclick = () => { const n = getTheme() === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('mr-tema', n); } catch (e) {} paintThemeBtn(); };
   $('#search').oninput = e => doSearch(e.target.value);
-  document.addEventListener('click', e => { if (!e.target.closest('#searchBox')) $('#searchRes').hidden = true; });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeModal(); $('#searchRes').hidden = true; closeDrawer(); } if (e.key === '/' && document.activeElement.tagName !== 'INPUT'){ e.preventDefault(); $('#search').focus(); } });
+  document.addEventListener('click', e => { if (!e.target.closest('#searchBox')) $('#searchRes').hidden = true; if (!e.target.closest('#ndBox')) $('#ndMenu').hidden = true; });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeModal(); $('#searchRes').hidden = true; $('#ndMenu').hidden = true; closeDrawer(); } if (e.key === '/' && document.activeElement.tagName !== 'INPUT'){ e.preventDefault(); $('#search').focus(); } });
   window.addEventListener('hashchange', route);
   route();
 })();
